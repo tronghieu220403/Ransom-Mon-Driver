@@ -7,7 +7,6 @@ namespace ransom
 
 	void FltRegister()
 	{
-		DataAnalyzer gg = DataAnalyzer();
 		kMapPidAna = new Map<int, DataAnalyzer*>();
 		kBlockPid = new Vector<int>();
 		kMapMutex.Create();
@@ -64,8 +63,8 @@ namespace ransom
 			goto end_func;
 		}
 		ans = (*kMapPidAna)[pid]->IsRandom();
-		kMapMutex.Unlock();
 	end_func:
+		kMapMutex.Unlock();
 		return ans;
 	}
 
