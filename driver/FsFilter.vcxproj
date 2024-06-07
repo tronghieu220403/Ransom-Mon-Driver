@@ -249,20 +249,17 @@
     <ClInclude Include="com\comport\comport.h" />
     <ClInclude Include="com\ioctl\common.h" />
     <ClInclude Include="com\ioctl\ioctl.h" />
+    <ClInclude Include="function\ransom\proc-mon.h" />
     <ClInclude Include="function\ransom\ransom-flt.h" />
     <ClInclude Include="function\ransom\watcher.h" />
     <ClInclude Include="std\file\file.h" />
-    <ClInclude Include="function\hide\hide-file.h" />
-    <ClInclude Include="function\hide\hide-proc.h" />
-    <ClInclude Include="function\protect\file-protect.h" />
-    <ClInclude Include="function\protect\proc-protect.h" />
     <ClInclude Include="process\eprocess.h" />
     <ClInclude Include="process\ps-monitor.h" />
     <ClInclude Include="std\map\map.hpp" />
     <ClInclude Include="std\memory\memory.h" />
     <ClInclude Include="std\memory\pair.h" />
     <ClInclude Include="std\memory\sharedptr.h" />
-    <ClInclude Include="std\set\set.h" />
+    <ClInclude Include="std\map\red-black-tree-map.h" />
     <ClInclude Include="std\string\string.h" />
     <ClInclude Include="std\sync\mutex.h" />
     <ClInclude Include="std\vector\vector.h" />
@@ -275,13 +272,10 @@
   <ItemGroup>
     <ClCompile Include="com\comport\comport.cpp" />
     <ClCompile Include="com\ioctl\ioctl.cpp" />
+    <ClCompile Include="function\ransom\proc-mon.cpp" />
     <ClCompile Include="function\ransom\ransom-flt.cpp" />
     <ClCompile Include="function\ransom\watcher.cpp" />
     <ClCompile Include="std\file\file.cpp" />
-    <ClCompile Include="function\hide\hide-proc.cpp" />
-    <ClCompile Include="function\protect\file-protect.cpp" />
-    <ClCompile Include="function\protect\proc-protect.cpp" />
-    <ClCompile Include="function\hide\hide-file.cpp" />
     <ClCompile Include="process\eprocess.cpp" />
     <ClCompile Include="process\ps-monitor.cpp" />
     <ClCompile Include="std\memory\memory.cpp" />

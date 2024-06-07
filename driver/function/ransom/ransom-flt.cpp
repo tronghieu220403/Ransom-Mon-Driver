@@ -12,6 +12,7 @@ namespace ransom
 		kMapMutex.Create();
 		kPidMutex.Create();
 		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, PreOperation, nullptr });
+		// Need to handle CHANGE_INFORMATION: block delete, setsize operation but still noti SUCCESS status to the ransom.
 		return;
 	}
 
@@ -95,6 +96,9 @@ namespace ransom
 	FLT_PREOP_CALLBACK_STATUS PreOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
 	{
 		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
+
+		// Check if pid in kRansomPidList from proc-mon.h. If not, return FLT_PREOP_SUCCESS_NO_CALLBACK immediately.
+
 		if (IsPidInBlockedList(pid) == true)
 		{
 			data->IoStatus.Status = STATUS_ACCESS_DENIED;
@@ -119,6 +123,8 @@ namespace ransom
 			BlockPid(pid);
 		}
 		
+		// Intercept the write operation, set length = 0
+
 		return FLT_PREOP_SUCCESS_NO_CALLBACK;
 	}
 
