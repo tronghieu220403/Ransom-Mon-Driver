@@ -117,7 +117,7 @@ namespace hide_file
         FILE_INFORMATION_CLASS info_class;
 
         String<WCHAR> root;
-        PVOID bufffer;
+        PVOID buffer;
         NTSTATUS status;
 
         if (FlagOn(flags, FLTFL_POST_OPERATION_DRAINING))
@@ -160,12 +160,12 @@ namespace hide_file
 	    {
 
             if (data->Iopb->Parameters.DirectoryControl.QueryDirectory.MdlAddress != NULL) {
-                bufffer = MmGetSystemAddressForMdlSafe(data->Iopb->Parameters.DirectoryControl.QueryDirectory.MdlAddress, NormalPagePriority | MdlMappingNoExecute);
+                buffer = MmGetSystemAddressForMdlSafe(data->Iopb->Parameters.DirectoryControl.QueryDirectory.MdlAddress, NormalPagePriority | MdlMappingNoExecute);
             }
             else {
-                bufffer = data->Iopb->Parameters.DirectoryControl.QueryDirectory.DirectoryBuffer;
+                buffer = data->Iopb->Parameters.DirectoryControl.QueryDirectory.DirectoryBuffer;
             }
-            if (bufffer == NULL) {
+            if (buffer == NULL) {
                 __leave;
             }
 
@@ -186,7 +186,7 @@ namespace hide_file
             {
             case FileFullDirectoryInformation:
                 file_info = flt::FileInfoShort(
-                    (PUCHAR)bufffer,
+                    (PUCHAR)buffer,
                     offsetof(FILE_FULL_DIR_INFORMATION, NextEntryOffset),
                     offsetof(FILE_FULL_DIR_INFORMATION, FileName),
                     offsetof(FILE_FULL_DIR_INFORMATION, FileNameLength),
@@ -196,7 +196,7 @@ namespace hide_file
                 break;
             case FileBothDirectoryInformation:
                 file_info = flt::FileInfoShort(
-                    (PUCHAR)bufffer,
+                    (PUCHAR)buffer,
                     offsetof(FILE_BOTH_DIR_INFORMATION, NextEntryOffset),
                     offsetof(FILE_BOTH_DIR_INFORMATION, FileName),
                     offsetof(FILE_BOTH_DIR_INFORMATION, FileNameLength),
@@ -206,7 +206,7 @@ namespace hide_file
                 break;
             case FileDirectoryInformation:
                 file_info = flt::FileInfoShort(
-                    (PUCHAR)bufffer,
+                    (PUCHAR)buffer,
                     offsetof(FILE_DIRECTORY_INFORMATION, NextEntryOffset),
                     offsetof(FILE_DIRECTORY_INFORMATION, FileName),
                     offsetof(FILE_DIRECTORY_INFORMATION, FileNameLength),
@@ -217,7 +217,7 @@ namespace hide_file
                 break;
             case FileIdFullDirectoryInformation:
                 file_info = flt::FileInfoShort(
-                    (PUCHAR)bufffer,
+                    (PUCHAR)buffer,
                     offsetof(FILE_ID_FULL_DIR_INFORMATION, NextEntryOffset),
                     offsetof(FILE_ID_FULL_DIR_INFORMATION, FileName),
                     offsetof(FILE_ID_FULL_DIR_INFORMATION, FileNameLength),
@@ -228,7 +228,7 @@ namespace hide_file
                 break;
             case FileIdBothDirectoryInformation:
                 file_info = flt::FileInfoShort(
-                    (PUCHAR)bufffer,
+                    (PUCHAR)buffer,
                     offsetof(FILE_ID_BOTH_DIR_INFORMATION, NextEntryOffset),
                     offsetof(FILE_ID_BOTH_DIR_INFORMATION, FileName),
                     offsetof(FILE_ID_BOTH_DIR_INFORMATION, FileNameLength),
@@ -238,7 +238,7 @@ namespace hide_file
                 break;
             case FileNamesInformation:
                 file_info = flt::FileInfoShort(
-                    (PUCHAR)bufffer,
+                    (PUCHAR)buffer,
                     offsetof(FILE_NAMES_INFORMATION, NextEntryOffset),
                     offsetof(FILE_NAMES_INFORMATION, FileName),
                     offsetof(FILE_NAMES_INFORMATION, FileNameLength)

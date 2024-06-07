@@ -26,13 +26,13 @@ namespace ransom {
 
         long long flat = max((long long)INT_MAX, max(sum_ui_ui_plus_1_, max(sum_ui_squared_, sum_ui_))) / INT_MAX;
 
-        sum_ui_ui_plus_1_ /= flat;
-        sum_ui_squared_ /= flat;
-        sum_ui_ /= flat;
-        size_ /= flat;
+        long long tmp_sum_ui_ui_plus_1 = sum_ui_ui_plus_1_ / flat;
+        long long tmp_sum_ui_squared = sum_ui_squared_ / flat;
+        long long tmp_sum_ui = sum_ui_ / flat;
+        long long tmp_size = size_ / flat;
 
-        long long numerator = size_ * sum_ui_ui_plus_1_ - sum_ui_ * sum_ui_;
-        long long denominator = size_ * sum_ui_squared_ - sum_ui_ * sum_ui_;
+        long long numerator = tmp_size * tmp_sum_ui_ui_plus_1 - tmp_sum_ui * tmp_sum_ui;
+        long long denominator = tmp_size * tmp_sum_ui_squared - tmp_sum_ui * tmp_sum_ui;
 
         if (denominator == 0) {
             return 0;  // Avoid division by zero

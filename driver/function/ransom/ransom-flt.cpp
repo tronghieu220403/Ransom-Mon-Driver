@@ -63,6 +63,7 @@ namespace ransom
 			goto end_func;
 		}
 		ans = (*kMapPidAna)[pid]->IsRandom();
+
 	end_func:
 		kMapMutex.Unlock();
 		return ans;
@@ -103,25 +104,19 @@ namespace ransom
 		unsigned char* buffer = (unsigned char*)data->Iopb->Parameters.Write.WriteBuffer;
 		if (buffer == nullptr)
 		{
-			buffer = (unsigned char*)data->Iopb->Parameters.Write.MdlAddress;
+			buffer = (unsigned char*)MmGetSystemAddressForMdlSafe(data->Iopb->Parameters.Write.MdlAddress, NormalPagePriority | MdlMappingNoExecute);
 		}
 		ULONG length = data->Iopb->Parameters.Write.Length;
 		
 		String<WCHAR> file_name = flt::GetFileFullPathName(data).Data();
 
-		String<WCHAR> tar = L"random_data_10MB.txt";
-
-		if (tar.IsSuffixOf(file_name))
+		Vector<unsigned char> write_data(length);
+		MemCopy(&write_data[0], buffer, length);
+		AddData(pid, write_data);
+		if (IsPidRansom(pid) == true)
 		{
-			DebugMessage("Length: %d", length);
-			Vector<unsigned char> write_data(length);
-			MemCopy(&write_data[0], buffer, length);
-			AddData(pid, write_data);
-			if (IsPidRansom(pid) == true)
-			{
-				DebugMessage("Ransom: %d", pid);
-				BlockPid(pid);
-			}
+			DebugMessage("Ransom: %d", pid);
+			BlockPid(pid);
 		}
 		
 		return FLT_PREOP_SUCCESS_NO_CALLBACK;
