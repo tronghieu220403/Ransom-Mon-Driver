@@ -11,8 +11,9 @@ namespace ransom
 		kBlockPid = new Vector<int>();
 		kMapMutex.Create();
 		kPidMutex.Create();
-		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, PreOperation, nullptr });
+		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, PreWriteOperation, nullptr });
 		// Need to handle CHANGE_INFORMATION: block delete, setsize operation but still noti SUCCESS status to the ransom.
+		reg::kFltFuncVector->PushBack({ IRP_MJ_SET_INFORMATION, PreSetInfoOperation, nullptr });
 		return;
 	}
 
@@ -93,11 +94,15 @@ namespace ransom
 		return check;
 	}
 
-	FLT_PREOP_CALLBACK_STATUS PreOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
+	FLT_PREOP_CALLBACK_STATUS PreWriteOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
 	{
 		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
 
 		// Check if pid in kRansomPidList from proc-mon.h. If not, return FLT_PREOP_SUCCESS_NO_CALLBACK immediately.
+		if (proc_mon::ContainRansomPid(pid) == false)
+		{
+			return FLT_PREOP_SUCCESS_NO_CALLBACK;
+		}
 
 		if (IsPidInBlockedList(pid) == true)
 		{
@@ -128,6 +133,48 @@ namespace ransom
 		return FLT_PREOP_SUCCESS_NO_CALLBACK;
 	}
 
+	FLT_PREOP_CALLBACK_STATUS PreSetInfoOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
+	{
+		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
+
+		// Check if pid in kRansomPidList from proc-mon.h. If not, return FLT_PREOP_SUCCESS_NO_CALLBACK immediately.
+		if (proc_mon::ContainRansomPid(pid) == false)
+		{
+			return FLT_PREOP_SUCCESS_NO_CALLBACK;
+		}
+		
+		if (IsPidInBlockedList(pid) == true)
+		{
+			data->IoStatus.Status = STATUS_ACCESS_DENIED;
+			data->IoStatus.Information = 0;
+			return FLT_PREOP_COMPLETE;
+		}
+
+		/*
+		String<WCHAR> file_name = flt::GetFileFullPathName(data).Data();
+		size_t size = file::File(file_name).Size();
+		if (size == 0)
+		{
+			DebugMessage("Cannot get file size: %ws",file_name.Data());
+			return FLT_PREOP_SUCCESS_NO_CALLBACK;
+		}
+		
+		// Intercept the set information operation, set length = 8
+		data->Iopb->Parameters.SetFileInformation.FileInformationClass = FileEndOfFileInformation;
+		data->Iopb->Parameters.SetFileInformation.Length = sizeof(FILE_END_OF_FILE_INFORMATION);
+		FILE_END_OF_FILE_INFORMATION* end_of_file_info = (FILE_END_OF_FILE_INFORMATION*)data->Iopb->Parameters.SetFileInformation.InfoBuffer;
+		end_of_file_info->EndOfFile.QuadPart = size;
+		*/
+
+		data->Iopb->Parameters.SetFileInformation.FileInformationClass = FileDispositionInformation;
+		data->Iopb->Parameters.SetFileInformation.Length = sizeof(FILE_DISPOSITION_INFORMATION);
+		FILE_DISPOSITION_INFORMATION* disposition_info = (FILE_DISPOSITION_INFORMATION*)data->Iopb->Parameters.SetFileInformation.InfoBuffer;
+		disposition_info->DeleteFile = FALSE;
+
+		FltSetCallbackDataDirty(data);
+
+		return FLT_PREOP_SUCCESS_NO_CALLBACK;
+	}
 
 }
 

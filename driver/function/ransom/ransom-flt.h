@@ -4,6 +4,7 @@
 #include "../../std/string/string.h"
 #include "../../std/sync/mutex.h"
 #include "../../std/map/map.hpp"
+#include "../../std/file/file.h"
 
 #include "../../process/ps-monitor.h"
 #include "../../template/register.h"
@@ -34,7 +35,9 @@ namespace ransom
 
 	bool IsPidInBlockedList(int pid);
 
-	FLT_PREOP_CALLBACK_STATUS PreOperation(_Inout_ PFLT_CALLBACK_DATA Data, _In_ PCFLT_RELATED_OBJECTS FltObjects, _Flt_CompletionContext_Outptr_ PVOID* CompletionContext);
+	FLT_PREOP_CALLBACK_STATUS PreWriteOperation(_Inout_ PFLT_CALLBACK_DATA Data, _In_ PCFLT_RELATED_OBJECTS FltObjects, _Flt_CompletionContext_Outptr_ PVOID* CompletionContext);
+
+	FLT_PREOP_CALLBACK_STATUS PreSetInfoOperation(_Inout_ PFLT_CALLBACK_DATA Data, _In_ PCFLT_RELATED_OBJECTS FltObjects, _Flt_CompletionContext_Outptr_ PVOID* CompletionContext);
 
 };
 
