@@ -252,6 +252,7 @@
     <ClInclude Include="function\ransom\proc-mon.h" />
     <ClInclude Include="function\ransom\ransom-flt.h" />
     <ClInclude Include="function\ransom\watcher.h" />
+    <ClInclude Include="std\algo\kmp.h" />
     <ClInclude Include="std\file\file.h" />
     <ClInclude Include="process\eprocess.h" />
     <ClInclude Include="process\ps-monitor.h" />
