@@ -11,7 +11,7 @@
 
 namespace proc_mon
 {
-	extern inline Vector<eprocess::ProcInfo>* kRansomPidList = nullptr;
+	extern inline Vector<int>* kRansomPidList = nullptr;
 	inline Mutex kRansomPidMutex = Mutex();
 
 	void DrvRegister();
@@ -19,7 +19,7 @@ namespace proc_mon
 
 	void AddPidToRansomPid(size_t);
 
-	void ContainRansomPid(size_t);
+	bool ContainRansomPid(size_t);
 
 	void DeletePid(size_t);
 
