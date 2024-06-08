@@ -6,7 +6,7 @@ namespace proc_mon
 	void DrvRegister()
 	{
 		kRansomPidList = new Vector<eprocess::ProcInfo>();
-		kProcIdMutex.Create();
+		kRansomPidMutex.Create();
 		NTSTATUS status;
 
 		status = PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)&proc_mon::ProcessNotifyCallBack, FALSE);
@@ -37,6 +37,7 @@ namespace proc_mon
 			{
 				process_image_name = &process_image_name[String<WCHAR>(L"\\??\\").Size()];
 			}
+			// If image has "ransom", add to blacklist
 			
 		}
 		else // Process termination

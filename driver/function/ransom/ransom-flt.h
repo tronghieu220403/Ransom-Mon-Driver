@@ -8,6 +8,7 @@
 #include "../../process/ps-monitor.h"
 #include "../../template/register.h"
 #include "../../template/flt-ex.h"
+#include "proc-mon.h"
 
 #include "watcher.h"
 
