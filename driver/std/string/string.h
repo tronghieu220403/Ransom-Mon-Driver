@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../memory/memory.h"
+#include "../algo/kmp.h"
 
 template<class T> class String
 {
@@ -159,6 +160,8 @@ public:
 
 	// Check if the string is a suffix of another string
 	bool IsSuffixOf(const String<T>&);
+
+	size_t Find(const String<T>&);
 
 	// Overloading the equal operator
 	bool operator==(const String<T>&);
@@ -646,6 +649,24 @@ inline bool String<T>::IsSuffixOf(const String<T>& str)
 	}
 
 	return true;
+}
+
+template<class T>
+inline size_t String<T>::Find(const String<T>& str)
+{
+	if (size_ < str.size_)
+	{
+		return static_cast<size_t>(-1);
+	}
+
+	if (elements_ == NULL || str.elements_ == NULL)
+	{
+		return static_cast<size_t>(-1);
+	}
+
+	KMPMatcher<T> matcher(elements_, size_, str.elements_, str.size_);
+
+	return matcher.KmpSearch();
 }
 
 template<class T>
