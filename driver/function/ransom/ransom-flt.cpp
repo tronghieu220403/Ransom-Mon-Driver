@@ -3,28 +3,17 @@
 namespace ransom
 {
 
-	inline Map<int, DataAnalyzer*>* kMapPidAna;
-
 	void FltRegister()
 	{
-		kMapPidAna = new Map<int, DataAnalyzer*>();
-		kBlockPid = new Vector<int>();
-		kMapMutex.Create();
-		kPidMutex.Create();
+		proc_mon::DrvRegister();
 		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, (PFLT_PRE_OPERATION_CALLBACK)PreWriteOperation, nullptr });
-		// Need to handle CHANGE_INFORMATION: block delete, setsize operation but still noti SUCCESS status to the ransom.
 		reg::kFltFuncVector->PushBack({ IRP_MJ_SET_INFORMATION, (PFLT_PRE_OPERATION_CALLBACK)PreSetInfoOperation, nullptr });
 		return;
 	}
 
 	void FltUnload()
 	{
-		for (auto it = (*kMapPidAna).Begin(); it != kMapPidAna->End(); it++)
-		{
-			delete it->second_;
-		}
-		delete kMapPidAna;
-		delete kBlockPid;
+		proc_mon::DrvUnload();
 	}
 
 	void DrvRegister()
@@ -37,67 +26,22 @@ namespace ransom
 
 	void AddData(int pid, Vector<unsigned char> data)
 	{
-		kMapMutex.Lock();
-		if (kMapPidAna->Find(pid) == kMapPidAna->End())
-		{
-			(*kMapPidAna)[pid] = new DataAnalyzer();
-		}
-		kMapMutex.Unlock();
-
-		kMapMutex.Lock();
-		(*kMapPidAna)[pid]->AddData(data);
-		kMapMutex.Unlock();
+		proc_mon::p_manager->AddData(pid, &data);
 	}
 
-	bool IsPidRansom(int pid)
+	bool IsPidRansomware(int pid)
 	{
-		bool ans = false;
-		kMapMutex.Lock();
-		if (kMapPidAna->Find(pid) == kMapPidAna->End())
-		{
-			ans = false;
-			goto end_func;
-		}
-
-		if ((*kMapPidAna)[pid]->GetSize() < 10 * 1024 * 1024)
-		{
-			ans = false;
-			goto end_func;
-		}
-		ans = (*kMapPidAna)[pid]->IsRandom();
-
-	end_func:
-		kMapMutex.Unlock();
-		return ans;
+		return proc_mon::p_manager->IsProcessRansomware(pid);
 	}
 
 	void BlockPid(int pid)
 	{
-		kPidMutex.Lock();
-		kBlockPid->PushBack(pid);
-		/*
-		if (proc_mon::KillProcess(pid))
-		{
-			DebugMessage("Fail to kill process %d", pid);
-		}
-		*/
-		kPidMutex.Unlock();
+		proc_mon::p_manager->SetForcedRansomPid(pid);
 	}
 
 	bool IsPidInBlockedList(int pid)
 	{
-		bool check = false;
-		kPidMutex.Lock();
-		for (int i = 0; i < kBlockPid->Size(); i++)
-		{
-			if ((*kBlockPid)[i] == pid)
-			{
-				check = true;
-				break;
-			}
-		}
-		kPidMutex.Unlock();
-		return check;
+		return proc_mon::p_manager->IsProcessForcedRansomware(pid);
 	}
 
 	FLT_PREOP_CALLBACK_STATUS PreWriteOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
@@ -105,7 +49,7 @@ namespace ransom
 		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
 
 		// Check if pid in kRansomPidList from proc-mon.h. If not, return FLT_PREOP_SUCCESS_NO_CALLBACK immediately.
-		if (proc_mon::ContainRansomPid(pid) == false)
+		if (proc_mon::p_manager->IsProcessForcedRansomware(pid) == false)
 		{
 			return FLT_PREOP_SUCCESS_NO_CALLBACK;
 		}
@@ -130,7 +74,7 @@ namespace ransom
 		MemCopy(&write_data[0], buffer, length);
 		AddData(pid, write_data);
 
-		if (IsPidRansom(pid) == true)
+		if (IsPidRansomware(pid) == true)
 		{
 			DebugMessage("Ransom: %d", pid);
 			BlockPid(pid);
@@ -146,7 +90,7 @@ namespace ransom
 		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
 
 		// Check if pid in kRansomPidList from proc-mon.h. If not, return FLT_PREOP_SUCCESS_NO_CALLBACK immediately.
-		if (proc_mon::ContainRansomPid(pid) == false)
+		if (proc_mon::p_manager->IsProcessForcedRansomware(pid) == false)
 		{
 			return FLT_PREOP_SUCCESS_NO_CALLBACK;
 		}

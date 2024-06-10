@@ -73,12 +73,6 @@ namespace ransom {
         }
     }
 
-    DataAnalyzer::DataAnalyzer() {
-        for (int i = 0; i < 256; ++i) {
-            freq_[i] = 0;
-        }
-    }
-
     void DataAnalyzer::AddData(const Vector<unsigned char>& new_data) {
 
         if (size_ == 0)
@@ -96,7 +90,8 @@ namespace ransom {
 
     bool DataAnalyzer::IsRandom() {
 
-        if (size_ == 0) {
+        if (size_ < MINIMUM_BYTES)
+        {
             return false;
         }
 

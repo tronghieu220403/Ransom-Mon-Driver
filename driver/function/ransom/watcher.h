@@ -4,23 +4,21 @@
 #include "../../std/string/string.h"
 #include "../../std/sync/mutex.h"
 
-#include "../../process/ps-monitor.h"
-#include "../../template/register.h"
-#include "../../template/flt-ex.h"
-
 #include <wdm.h>
 #include <fltKernel.h>
 
 #define CHI_SQUARE_THRESHOLD 311
-
 // real threshold is 0.0011
 #define SERIAL_BYTE_CORRELATION_COEFFICIENT_THRESHOLD 11
 #define SERIAL_BYTE_CORRELATION_COEFFICIENT_MULTIPLE 10000
+
+#define MINIMUM_BYTES 10485760 // 10MB
 
 namespace ransom
 {
     class DataAnalyzer {
     private:
+
         long long size_ = 0;
 
         long long freq_[256] = { 0 };
@@ -38,10 +36,11 @@ namespace ransom
 
     public:
 
-        DataAnalyzer();
+        DataAnalyzer() = default;
         void AddData(const Vector<unsigned char>& new_data);
         bool IsRandom();
         long long GetSize();
+        ~DataAnalyzer() = default;
     };
 
 }

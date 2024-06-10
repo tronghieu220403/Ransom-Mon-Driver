@@ -1,13 +1,10 @@
 #include "proc-mon.h"
 
-
 namespace proc_mon
 {
 	void DrvRegister()
 	{
 		p_manager = new ProcessManager();
-		kRansomPidList = new Vector<int>();
-		kRansomPidMutex.Create();
 		NTSTATUS status;
 
 		status = PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)&proc_mon::ProcessNotifyCallBackEx, FALSE);
@@ -21,124 +18,32 @@ namespace proc_mon
 	void DrvUnload()
 	{
 		delete p_manager;
-		delete kRansomPidList;
 		PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)&proc_mon::ProcessNotifyCallBackEx, TRUE);
 	}
 
-	void AddPidToRansomPid(size_t pid)
+	void Process::Clean()
 	{
-		kRansomPidMutex.Lock();
-		kRansomPidList->PushBack(pid);
-		kRansomPidMutex.Unlock();
+		ppid_ = 0;
+		forced_ransom_ = false;
 	}
 
-	ProcessManager::ProcessManager() {
-		mtx_.Create();
-	}
-
-	int ProcessManager::GetProcessInfo(int pid, int info_type) {
-		mtx_.Lock();
-		if (pid >= processes_.Size() || !processes_[pid].active) {
-			mtx_.Unlock();
-			return 0;
-		}
-
-		if (info_type == GET_PPID) {
-			mtx_.Unlock();
-			return processes_[pid].ppid;
-		}
-		else if (info_type == GET_WRITE_BYTES) {
-			mtx_.Unlock();
-			return processes_[pid].write_bytes;
-		}
-		mtx_.Unlock();
-		return 0;
-	}
-
-	void ProcessManager::AddProcess(int pid, int ppid) {
-		mtx_.Lock();
-		if (pid >= processes_.Size()) {
-			processes_.Resize(pid + 1);
-		}
-		processes_[pid].ppid = ppid;
-		processes_[pid].write_bytes = 0;
-		processes_[pid].active = true;
-		mtx_.Unlock();
-		return;
-	}
-
-	void ProcessManager::DeleteProcess(int pid) {
-		mtx_.Lock();
-		if (pid >= processes_.Size() || !processes_[pid].active) {
-			mtx_.Unlock();
-			return;
-		}
-
-		int oldPpid = processes_[pid].ppid;
-		int sz = processes_.Size();
-		for (int i = 0; i < sz; i++)
-		{
-			Process process = processes_[i];
-			if (process.active && process.ppid == pid) {
-				process.ppid = oldPpid;
-			}
-		}
-
-		processes_[pid] = Process();
-		mtx_.Unlock();
-		return;
-	}
-
-	Vector<int> ProcessManager::GetDescendants(int pid) {
-		mtx_.Lock();
-		Vector<int> descendants;
-		Vector<int> temp_vector;
-		size_t index = 0;
-
-		if (pid >= processes_.Size() || !processes_[pid].active) {
-			mtx_.Unlock();
-			return descendants;
-		}
-		descendants.PushBack(pid);
-		temp_vector.PushBack(pid);
-
-		char* check = new char[processes_.Size()];
-		ZeroMemory(check, processes_.Size() * sizeof(char));
-
-		while (index < temp_vector.Size()) {
-			int cur_pid = temp_vector[index++];
-			for (int i = 0; i < processes_.Size(); ++i) {
-				if (processes_[i].active && processes_[i].ppid == cur_pid && !check[i]) {
-					descendants.PushBack(i);
-					temp_vector.PushBack(i);
-					check[i] = true;
-				}
-			}
-		}
-		delete[] check;
-		mtx_.Unlock();
-		return descendants;
-	}
-
-	bool ProcessManager::KillProcess(int pid)
+	bool Process::Suicide()
 	{
 		NTSTATUS status;
 		PEPROCESS peprocess = nullptr;
 		HANDLE process_handle = NULL;
 		HANDLE new_process_handle = NULL;
 
-		status = PsLookupProcessByProcessId((HANDLE)pid, &peprocess);
+		status = PsLookupProcessByProcessId((HANDLE)pid_, &peprocess);
 		if (!NT_SUCCESS(status))
 		{
 			peprocess = nullptr;
-			DebugMessage("KillProcess: Fail on the first PsLookupProcessByProcessId %d ", status);
 			return false;
 		}
 
 		status = ObOpenObjectByPointer(peprocess, 0, NULL, DELETE, *PsProcessType, KernelMode, &process_handle);
 		if (!NT_SUCCESS(status))
 		{
-			DebugMessage("KillProcess: Fail on the first ObOpenObjectByPointer %d ", status);
 			if (peprocess)
 			{
 				ObDereferenceObject(peprocess);
@@ -149,7 +54,6 @@ namespace proc_mon
 		ObReferenceObjectByHandle(process_handle, 0, *PsProcessType, KernelMode, (PVOID*)&peprocess, NULL);
 		if (!NT_SUCCESS(status))
 		{
-			DebugMessage("KillProcess: Fail on the first ObReferenceObjectByHandle %d ", status);
 			peprocess = nullptr;
 			return false;
 		}
@@ -158,48 +62,197 @@ namespace proc_mon
 			status = ZwTerminateProcess(new_process_handle, 0);
 			if (!NT_SUCCESS(status))
 			{
-				DebugMessage("KillProcess: Fail on the first ZwTerminateProcess %d ", status);
+				ZwClose(new_process_handle);
+				ObDereferenceObject(peprocess);
+				return false;
 			}
 			ZwClose(new_process_handle);
 			ObDereferenceObject(peprocess);
+			Clean();
 			return true;
-		}
-		else
-		{
-			DebugMessage("KillProcess: Fail on the second ObOpenObjectByPointer %d ", status);
 		}
 		ObDereferenceObject(peprocess);
 		return false;
 	}
 
-	bool ContainRansomPid(size_t pid)
+	void Process::AddData(const Vector<unsigned char>* data)
 	{
-		bool ans = false;
-		kRansomPidMutex.Lock();
-		for (int i = 0; i < kRansomPidList->Size(); i++)
+		data_analyzer_.AddData(*data);
+	}
+
+
+
+	ProcessManager::ProcessManager() {
+		mtx_.Create();
+	}
+
+	int ProcessManager::GetProcessInfo(int pid, int info_type) {
+		mtx_.Lock();
+		int ret;
+		if (pid >= processes_.Size() || processes_[pid] == nullptr) {
+			mtx_.Unlock();
+			return 0;
+		}
+
+		if (info_type == GET_PPID) {
+			ret = processes_[pid]->ppid_;
+			mtx_.Unlock();
+			return ret;
+		}
+		else if (info_type == GET_WRITE_BYTES) {
+			ret = processes_[pid]->data_analyzer_.GetSize();
+			mtx_.Unlock();
+			return ret;
+		}
+		mtx_.Unlock();
+		return 0;
+	}
+
+	void ProcessManager::AddProcess(int pid, int ppid) {
+		mtx_.Lock();
+		if (pid >= processes_.Size()) {
+			processes_.Resize(pid + (size_t)1);
+		}
+		processes_[pid] = new Process();
+		processes_[pid]->pid_ = pid;
+		processes_[pid]->ppid_ = ppid;
+		mtx_.Unlock();
+		return;
+	}
+
+	void ProcessManager::DeleteProcess(int pid) {
+		mtx_.Lock();
+		if (pid >= processes_.Size() || processes_[pid] == nullptr) {
+			mtx_.Unlock();
+			return;
+		}
+		int old_ppid = processes_[pid]->ppid_;
+		int sz = processes_.Size();
+		for (int i = 0; i < sz; i++)
 		{
-			if ((*kRansomPidList)[i] == pid)
-			{
-				ans = true;
-				break;
+			if (processes_[i] != nullptr && processes_[i]->ppid_ == pid) {
+				processes_[i]->ppid_ = old_ppid;
 			}
 		}
-		kRansomPidMutex.Unlock();
+		delete processes_[pid];
+		processes_[pid] = nullptr;
+		mtx_.Unlock();
+		return;
+	}
+
+	bool ProcessManager::KillProcess(int pid)
+	{
+		mtx_.Lock();
+		if (pid >= processes_.Size() || processes_[pid] == nullptr) {
+			mtx_.Unlock();
+			return false;
+		}
+		bool ret = processes_[pid]->Suicide();
+		if (ret == true)
+		{
+			delete processes_[pid];
+			processes_[pid] = nullptr;
+		}
+		mtx_.Unlock();
+		return ret;
+	}
+
+	void ProcessManager::AddData(int pid, const Vector<unsigned char>* data)
+	{
+		mtx_.Lock();
+		if (pid >= processes_.Size()) {
+			processes_.Resize(pid + (size_t)1);
+		}
+		if (processes_[pid] == nullptr)
+		{
+			processes_[pid] = new Process();
+		}
+		processes_[pid]->pid_ = pid;
+		processes_[pid]->AddData(data);
+	}
+
+	Vector<int> ProcessManager::GetDescendants(int pid) {
+		mtx_.Lock();
+		Vector<int> descendants;
+		Vector<int> temp_vector;
+		size_t index = 0;
+
+		if (pid >= processes_.Size() || processes_[pid] == nullptr) {
+			mtx_.Unlock();
+			return descendants;
+		}
+		descendants.PushBack(pid);
+		temp_vector.PushBack(pid);
+
+		bool* check = new bool[processes_.Size() + 1];
+		ZeroMemory(check, processes_.Size() * sizeof(char));
+
+		while (index < temp_vector.Size()) {
+			int cur_pid = temp_vector[index++];
+			for (int i = 0; i < processes_.Size(); ++i) {
+				if (processes_[i] != nullptr && processes_[i]->ppid_ == cur_pid)
+					if (!check[i]) 
+					{
+						descendants.PushBack(i);
+						temp_vector.PushBack(i);
+						check[i] = true;
+					}
+			}
+		}
+		delete check;
+		mtx_.Unlock();
+		return descendants;
+	}
+
+	void ProcessManager::SetForcedRansomPid(size_t pid)
+	{
+		mtx_.Lock();
+		if (processes_.Size() <= pid)
+		{
+			processes_.Resize(pid + 1);
+			processes_[pid] = new Process();
+		}
+		processes_[pid]->forced_ransom_;
+		processes_[pid]->pid_ = pid;
+		processes_[pid]->forced_ransom_ = true;
+		mtx_.Unlock();
+		Vector<int> ransom_child = p_manager->GetDescendants(pid);
+		mtx_.Lock();
+		for (int i = 0; i < ransom_child.Size(); i++)
+		{
+			int id = ransom_child[i];
+			processes_[pid]->forced_ransom_ = true;
+		}
+		mtx_.Unlock();
+		return;
+	}
+
+	bool ProcessManager::IsProcessRansomware(int pid)
+	{
+		mtx_.Lock();
+		bool ans = false;
+		if (pid >= processes_.Size() || processes_[pid] == nullptr)
+		{
+			mtx_.Unlock();
+			return false;
+		}
+		ans = processes_[pid]->data_analyzer_.IsRandom();
+		mtx_.Unlock();
 		return ans;
 	}
 
-	void DeletePid(size_t pid)
+	bool ProcessManager::IsProcessForcedRansomware(int pid)
 	{
-		kRansomPidMutex.Lock();
-		for (int i = 0; i < kRansomPidList->Size(); i++)
+		mtx_.Lock();
+		bool ans = false;
+		if (pid >= processes_.Size() || processes_[pid] == nullptr)
 		{
-			if ((*kRansomPidList)[i] == pid)
-			{
-				kRansomPidList->EraseUnordered(i);
-				break;
-			}
+			mtx_.Unlock();
+			return false;
 		}
-		kRansomPidMutex.Unlock();
+		ans = processes_[pid]->forced_ransom_;
+		mtx_.Unlock();
+		return false;
 	}
 
 
@@ -217,25 +270,27 @@ namespace proc_mon
 			{
 				process_image_name = &process_image_name[String<WCHAR>(L"\\??\\").Size()];
 			}
+			
+			p_manager->AddProcess(pid, (int)create_info->ParentProcessId);
 			// If image has "ransom", add to blacklist
 			if (process_image_name.Find(L"ransom") != static_cast<size_t>(-1))
 			{
+				p_manager->SetForcedRansomPid(pid);
 				DebugMessage("Ransom: %lld", pid);
-				p_manager->AddProcess(pid, (int)create_info->ParentProcessId);
-				AddPidToRansomPid(pid);
+			}
+			else if (p_manager->IsProcessForcedRansomware((int)create_info->ParentProcessId))
+			{
+				p_manager->SetForcedRansomPid(pid);
 			}
 			
 		}
 		else // Process termination
 		{
-			DeletePid(pid);
 			p_manager->DeleteProcess(pid);
 		}
 	}
 
 	
 
-
-	
 }
 
