@@ -89,6 +89,58 @@ namespace proc_mon
 		}
 	}
 
+	bool KillProcess(size_t pid)
+	{
+		NTSTATUS status;
+		PEPROCESS peprocess = nullptr;
+		HANDLE process_handle = NULL;
+		HANDLE new_process_handle = NULL;
+
+		status = PsLookupProcessByProcessId((HANDLE)pid, &peprocess);
+		if (!NT_SUCCESS(status))
+		{
+			peprocess = nullptr;
+			DebugMessage("KillProcess: Fail on the first PsLookupProcessByProcessId %d ", status);
+			return false;
+		}
+
+		status = ObOpenObjectByPointer(peprocess, 0, NULL, DELETE, *PsProcessType, KernelMode, &process_handle);
+		if (!NT_SUCCESS(status))
+		{
+			DebugMessage("KillProcess: Fail on the first ObOpenObjectByPointer %d ", status);
+			if (peprocess)
+			{
+				ObDereferenceObject(peprocess);
+			}
+		}
+
+		peprocess = nullptr;
+		ObReferenceObjectByHandle(process_handle, 0, *PsProcessType, KernelMode, (PVOID*)&peprocess, NULL);
+		if (!NT_SUCCESS(status))
+		{
+			DebugMessage("KillProcess: Fail on the first ObReferenceObjectByHandle %d ", status);
+			peprocess = nullptr;
+			return false;
+		}
+		if (NT_SUCCESS(status = ObOpenObjectByPointer(peprocess, OBJ_KERNEL_HANDLE, NULL, DELETE, *PsProcessType, KernelMode, &new_process_handle)))
+		{
+			status = ZwTerminateProcess(new_process_handle, 0);
+			if (!NT_SUCCESS(status))
+			{
+				DebugMessage("KillProcess: Fail on the first ZwTerminateProcess %d ", status);
+			}
+			ZwClose(new_process_handle);
+			ObDereferenceObject(peprocess);
+			return true;
+		}
+		else
+		{
+			DebugMessage("KillProcess: Fail on the second ObOpenObjectByPointer %d ", status);
+		}
+		ObDereferenceObject(peprocess);
+		return false;
+
+	}
 
 }
 

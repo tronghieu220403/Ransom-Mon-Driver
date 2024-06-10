@@ -25,6 +25,6 @@ namespace proc_mon
 
 	void ProcessNotifyCallBack(PEPROCESS, size_t, PPS_CREATE_NOTIFY_INFO);
 
-	void KillProcess(size_t);
+	bool KillProcess(size_t);
 
 }
