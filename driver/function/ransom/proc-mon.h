@@ -23,7 +23,7 @@ namespace proc_mon
 
 	void DeletePid(size_t);
 
-	void ProcessNotifyCallBack(PEPROCESS, size_t, PPS_CREATE_NOTIFY_INFO);
+	void ProcessNotifyCallBack(PEPROCESS, HANDLE, PPS_CREATE_NOTIFY_INFO);
 
 	bool KillProcess(size_t);
 

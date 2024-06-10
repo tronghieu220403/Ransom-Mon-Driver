@@ -61,7 +61,7 @@ namespace proc_mon
 	}
 
 
-	void ProcessNotifyCallBack(PEPROCESS eprocess, size_t pid, PPS_CREATE_NOTIFY_INFO create_info)
+	void ProcessNotifyCallBackEx(PEPROCESS eprocess, size_t pid, PPS_CREATE_NOTIFY_INFO create_info)
 	{
 		if (create_info) // Process creation
 		{
