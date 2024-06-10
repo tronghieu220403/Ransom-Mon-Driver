@@ -11,9 +11,9 @@ namespace ransom
 		kBlockPid = new Vector<int>();
 		kMapMutex.Create();
 		kPidMutex.Create();
-		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, PreWriteOperation, nullptr });
+		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, (PFLT_PRE_OPERATION_CALLBACK)PreWriteOperation, nullptr });
 		// Need to handle CHANGE_INFORMATION: block delete, setsize operation but still noti SUCCESS status to the ransom.
-		reg::kFltFuncVector->PushBack({ IRP_MJ_SET_INFORMATION, PreSetInfoOperation, nullptr });
+		reg::kFltFuncVector->PushBack({ IRP_MJ_SET_INFORMATION, (PFLT_PRE_OPERATION_CALLBACK)PreSetInfoOperation, nullptr });
 		return;
 	}
 
@@ -74,7 +74,13 @@ namespace ransom
 	void BlockPid(int pid)
 	{
 		kPidMutex.Lock();
-		//kBlockPid->PushBack(pid);
+		kBlockPid->PushBack(pid);
+		/*
+		if (proc_mon::KillProcess(pid))
+		{
+			DebugMessage("Fail to kill process %d", pid);
+		}
+		*/
 		kPidMutex.Unlock();
 	}
 

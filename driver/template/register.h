@@ -5,7 +5,6 @@
 
 #include "../std/vector/vector.h"
 
-#include "../function/hide/hide-proc.h"
 #include "../function/ransom/ransom-flt.h"
 #include "../process/ps-monitor.h"
 #include "../com/ioctl/ioctl.h"
