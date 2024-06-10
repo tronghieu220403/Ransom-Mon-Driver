@@ -116,6 +116,7 @@ namespace ransom
 			data->IoStatus.Information = 0;
 			return FLT_PREOP_COMPLETE;
 		}
+
 		unsigned char* buffer = (unsigned char*)data->Iopb->Parameters.Write.WriteBuffer;
 		if (buffer == nullptr)
 		{
@@ -128,6 +129,7 @@ namespace ransom
 		Vector<unsigned char> write_data(length);
 		MemCopy(&write_data[0], buffer, length);
 		AddData(pid, write_data);
+
 		if (IsPidRansom(pid) == true)
 		{
 			DebugMessage("Ransom: %d", pid);
