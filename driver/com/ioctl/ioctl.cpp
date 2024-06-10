@@ -66,41 +66,29 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 	case IOCTL_CMD_CLASS::kHideFile:
 
 		str = cmd->ParseHideFile().file_path;
-		DebugMessage("Hide file: %ws", str.Data());
-		hide_file::AddFileToHideList(&str);
 		break;
 
 	case IOCTL_CMD_CLASS::kHideDir:
 
 		str = cmd->ParseHideDir().dir_path;
-		DebugMessage("Hide dir: %ws", str.Data());
-		hide_file::AddDirToHideList(&str);
 		break;
 
 	case IOCTL_CMD_CLASS::kUnhideFile:
 
 		str = cmd->ParseUnhideFile().file_path;
-		DebugMessage("Unhide file: %ws", str.Data());
-		hide_file::DeleteFileFromHideList(&str);
 		break;
 
 	case IOCTL_CMD_CLASS::kUnhideDir:
 
 		str = cmd->ParseUnhideDir().dir_path;
-		DebugMessage("Unhide dir: %ws", str.Data());
-		hide_file::DeleteDirFromHideList(&str);
 		break;
 
 	case IOCTL_CMD_CLASS::kHideProcId:
 		pid = cmd->ParseHideProcId().pid;
-		DebugMessage("Hide proc ID: %d", pid);
-		hide_proc::AddProcIdToHideList(pid);
 		break;
 
 	case IOCTL_CMD_CLASS::kUnhideProcId:
 		pid = cmd->ParseHideProcId().pid;
-		DebugMessage("Unhide proc ID: %d", pid);
-		hide_proc::DeleteProcIdFromHideList(pid);
 		break;
 
 	case IOCTL_CMD_CLASS::kHideProcImage:
@@ -122,32 +110,21 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 	case IOCTL_CMD_CLASS::kProctectFile:
 
 		str = cmd->ParseProtectFile().file_path;
-		DebugMessage("Protect file: %ws", str.Data());
-		protect_file::AddFileToProtectedList(&str);
-
 		break;
 
 	case IOCTL_CMD_CLASS::kUnproctectFile:
 
 		str = cmd->ParseUnprotectFile().file_path;
-		DebugMessage("Unprotect file: %ws", str.Data());
-		protect_file::RemoveFileFromProtectedList(&str);
-
 		break;
 
 	case IOCTL_CMD_CLASS::kProctectDir:
 
 		str = cmd->ParseProtectDir().dir_path;
-		DebugMessage("Protect dir: %ws", str.Data());
-		protect_file::AddDirToProtectedList(&str);
-
 		break;
 
 	case IOCTL_CMD_CLASS::kUnproctectDir:
 
 		str = cmd->ParseUnprotectDir().dir_path;
-		DebugMessage("Unprotect dir: %ws", str.Data());
-		protect_file::RemoveDirFromProtectedList(&str);
 		break;
 
 	default:
