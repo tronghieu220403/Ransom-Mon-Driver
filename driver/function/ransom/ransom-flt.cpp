@@ -8,6 +8,7 @@ namespace ransom
 		proc_mon::DrvRegister();
 		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, (PFLT_PRE_OPERATION_CALLBACK)PreWriteOperation, nullptr });
 		reg::kFltFuncVector->PushBack({ IRP_MJ_SET_INFORMATION, (PFLT_PRE_OPERATION_CALLBACK)PreSetInfoOperation, nullptr });
+		reg::kFltFuncVector->PushBack({ IRP_MJ_CREATE, (PFLT_PRE_OPERATION_CALLBACK)PreCreateOperation, (PFLT_POST_OPERATION_CALLBACK)PostCreateOperation });
 		return;
 	}
 
@@ -37,6 +38,16 @@ namespace ransom
 	void BlockPid(int pid)
 	{
 		proc_mon::p_manager->SetForcedRansomPid(pid);
+		Vector<int> ransom_child = proc_mon::p_manager->GetDescendants(pid);
+		DebugMessage("Killing ransomware...");
+		for (int i = 0; i < ransom_child.Size(); ++i)
+		{
+			if (proc_mon::p_manager->KillProcess(ransom_child[i]) == false)
+			{
+				DebugMessage("Failed to kill ransomware process pid: %d", ransom_child[i]);
+			}
+		}
+		DebugMessage("Finished killing ransomware");
 	}
 
 	bool IsPidInBlockedList(int pid)
@@ -76,7 +87,7 @@ namespace ransom
 
 		if (IsPidRansomware(pid) == true)
 		{
-			DebugMessage("Ransom: %d", pid);
+			DebugMessage("Ransomware pid detected: %d", pid);
 			BlockPid(pid);
 		}
 		
@@ -126,6 +137,24 @@ namespace ransom
 		FltSetCallbackDataDirty(data);
 
 		return FLT_PREOP_SUCCESS_NO_CALLBACK;
+	}
+
+	FLT_PREOP_CALLBACK_STATUS PreCreateOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
+	{
+		return FLT_PREOP_SUCCESS_WITH_CALLBACK;
+	}
+
+	FLT_POSTOP_CALLBACK_STATUS PostCreateOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _In_ PVOID completion_context, _In_ FLT_POST_OPERATION_FLAGS flags)
+	{
+		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
+
+		// Check if pid in kRansomPidList from proc-mon.h. If not, return FLT_PREOP_SUCCESS_NO_CALLBACK immediately.
+		if (proc_mon::p_manager->IsProcessForcedRansomware(pid) == false)
+		{
+			return FLT_POSTOP_FINISHED_PROCESSING;
+		}
+
+		return FLT_POSTOP_FINISHED_PROCESSING;
 	}
 
 }
