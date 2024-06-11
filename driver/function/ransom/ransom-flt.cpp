@@ -53,6 +53,8 @@ namespace ransom
 	{
 
 		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
+		ULONG length = data->Iopb->Parameters.Write.Length;
+		//DebugMessage("Pid %d with length: %d", pid, length);
 		unsigned char* buffer = nullptr;
 		if (data->Iopb->Parameters.Write.MdlAddress != nullptr)
 		{
@@ -62,21 +64,23 @@ namespace ransom
 
 				data->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 				data->IoStatus.Information = 0;
+				//DebugMessage("STATUS_INSUFFICIENT_RESOURCES");
 				return FLT_PREOP_COMPLETE;
 			}
 		}
 		else
 		{
-			buffer = (unsigned char*)data->Iopb->Parameters.Write.MdlAddress;
+			buffer = (unsigned char*)data->Iopb->Parameters.Write.WriteBuffer;
 		}
 
-		ULONG length = data->Iopb->Parameters.Write.Length;
 		Vector<unsigned char> write_data(length);
 		__try {
 			MemCopy(&write_data[0], buffer, length);
 		} __except(EXCEPTION_EXECUTE_HANDLER) {
 			data->IoStatus.Status = GetExceptionCode();
 			data->IoStatus.Information = 0;
+			//DebugMessage("GetExceptionCode(): %llx", GetExceptionCode());
+
 			return FLT_PREOP_COMPLETE;
 		}
 
