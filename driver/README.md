@@ -1,3 +1,3 @@
-﻿Cần lưu và quản lý các file mà ransomware ghi vào để kiểm tra việc load dll độc cho hàm PLOAD_IMAGE_NOTIFY_ROUTINE_EX.
-Cần một services ở user mode để hook các hàm đổi quyền, đọc, ghi memory của ransomware lên các process khác, giám sát việc injection.
-Cần bổ sung code về trao đổi thông giữa service và kernel driver. Ví dụ process ransomware ghi lên vùng memory của process X thì cũng phải gán process X là ransomware để theo dõi.
+﻿1. Cần lưu và quản lý các file mà ransomware ghi vào để kiểm tra việc load dll độc cho hàm PLOAD_IMAGE_NOTIFY_ROUTINE_EX.
+2. Cần một services ở user mode để hook các hàm đổi quyền, đọc, ghi memory của ransomware lên các process khác, giám sát việc injection.
+3. Cần bổ sung code về trao đổi thông giữa service và kernel driver. Ví dụ process ransomware ghi lên vùng memory của process X thì cũng phải gán process X là ransomware để theo dõi.
