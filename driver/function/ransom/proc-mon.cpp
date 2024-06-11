@@ -169,6 +169,7 @@ namespace proc_mon
 		}
 		processes_[pid]->pid_ = pid;
 		processes_[pid]->AddData(data);
+		mtx_.Unlock();
 	}
 
 	Vector<int> ProcessManager::GetDescendants(int pid) {
@@ -212,7 +213,6 @@ namespace proc_mon
 			processes_.Resize(pid + 1);
 			processes_[pid] = new Process();
 		}
-		processes_[pid]->forced_ransom_;
 		processes_[pid]->pid_ = pid;
 		processes_[pid]->forced_ransom_ = true;
 		mtx_.Unlock();
@@ -252,7 +252,7 @@ namespace proc_mon
 		}
 		ans = processes_[pid]->forced_ransom_;
 		mtx_.Unlock();
-		return false;
+		return ans;
 	}
 
 
@@ -276,11 +276,12 @@ namespace proc_mon
 			if (process_image_name.Find(L"ransom") != static_cast<size_t>(-1))
 			{
 				p_manager->SetForcedRansomPid(pid);
-				DebugMessage("Ransom: %lld", pid);
+				DebugMessage("Forced ransomware: %lld", pid);
 			}
 			else if (p_manager->IsProcessForcedRansomware((int)create_info->ParentProcessId))
 			{
 				p_manager->SetForcedRansomPid(pid);
+				DebugMessage("Forced ransomware: %lld", pid);
 			}
 			
 		}
