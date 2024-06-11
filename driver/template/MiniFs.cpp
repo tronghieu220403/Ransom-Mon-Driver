@@ -304,6 +304,11 @@ Return Value:
 		return FLT_PREOP_SUCCESS_NO_CALLBACK;
 	}
 
+    if (data->RequestorMode == KernelMode)
+    {
+        return FLT_PREOP_SUCCESS_NO_CALLBACK;
+    }
+
     reg::Context* p = nullptr;
     if ((*completion_context) == nullptr)
     {
