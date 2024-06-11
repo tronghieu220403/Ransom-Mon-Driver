@@ -6,18 +6,14 @@
 
 #include "watcher.h"
 
-#define GET_PPID 1
-#define GET_WRITE_BYTES 2
-
 namespace proc_mon
 {
     struct Process {
         int pid_;
         int ppid_;
-        bool forced_ransom_;
         ransom::DataAnalyzer data_analyzer_;
         
-        Process() : pid_(0), ppid_(0), forced_ransom_(false), data_analyzer_(){};
+        Process() : pid_(0), ppid_(0), data_analyzer_(){};
 
         void Clean();
         bool Suicide();
@@ -31,7 +27,6 @@ namespace proc_mon
         Mutex mtx_;
     public:
         ProcessManager();
-        int GetProcessInfo(int pid, int info_type);
         
         void AddProcess(int pid, int ppid);
         void DeleteProcess(int pid);
@@ -41,9 +36,7 @@ namespace proc_mon
 
         Vector<int> GetDescendants(int pid);
 
-        void SetForcedRansomPid(size_t pid);
         bool IsProcessRansomware(int pid);
-        bool IsProcessForcedRansomware(int pid);
 
     };
 
@@ -52,9 +45,6 @@ namespace proc_mon
 	void DrvRegister();
 	void DrvUnload();
 
-	void ProcessNotifyCallBackEx(PEPROCESS, size_t, PPS_CREATE_NOTIFY_INFO);
-
-
+	void ProcessNotifyCallBackEx(PEPROCESS, int, PPS_CREATE_NOTIFY_INFO);
     
-
 }

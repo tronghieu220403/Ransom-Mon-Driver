@@ -12,7 +12,6 @@ namespace proc_mon
 		{
 			DebugMessage("Fail to register: %x", status);
 		}
-		// Need to handle a ransom write to memory of a process -> mark the victim as ransom
 	}
 
 	void DrvUnload()
@@ -24,7 +23,6 @@ namespace proc_mon
 	void Process::Clean()
 	{
 		ppid_ = 0;
-		forced_ransom_ = false;
 	}
 
 	bool Process::Suicide()
@@ -86,28 +84,6 @@ namespace proc_mon
 		mtx_.Create();
 	}
 
-	int ProcessManager::GetProcessInfo(int pid, int info_type) {
-		mtx_.Lock();
-		int ret;
-		if (pid >= processes_.Size() || processes_[pid] == nullptr) {
-			mtx_.Unlock();
-			return 0;
-		}
-
-		if (info_type == GET_PPID) {
-			ret = processes_[pid]->ppid_;
-			mtx_.Unlock();
-			return ret;
-		}
-		else if (info_type == GET_WRITE_BYTES) {
-			ret = processes_[pid]->data_analyzer_.GetSize();
-			mtx_.Unlock();
-			return ret;
-		}
-		mtx_.Unlock();
-		return 0;
-	}
-
 	void ProcessManager::AddProcess(int pid, int ppid) {
 		mtx_.Lock();
 		if (pid >= processes_.Size()) {
@@ -127,8 +103,8 @@ namespace proc_mon
 			return;
 		}
 		int old_ppid = processes_[pid]->ppid_;
-		int sz = processes_.Size();
-		for (int i = 0; i < sz; i++)
+		size_t sz = processes_.Size();
+		for (size_t i = 0; i < sz; i++)
 		{
 			if (processes_[i] != nullptr && processes_[i]->ppid_ == pid) {
 				processes_[i]->ppid_ = old_ppid;
@@ -205,28 +181,6 @@ namespace proc_mon
 		return descendants;
 	}
 
-	void ProcessManager::SetForcedRansomPid(size_t pid)
-	{
-		mtx_.Lock();
-		if (processes_.Size() <= pid)
-		{
-			processes_.Resize(pid + 1);
-			processes_[pid] = new Process();
-		}
-		processes_[pid]->pid_ = pid;
-		processes_[pid]->forced_ransom_ = true;
-		mtx_.Unlock();
-		Vector<int> ransom_child = p_manager->GetDescendants(pid);
-		mtx_.Lock();
-		for (int i = 0; i < ransom_child.Size(); i++)
-		{
-			int id = ransom_child[i];
-			processes_[pid]->forced_ransom_ = true;
-		}
-		mtx_.Unlock();
-		return;
-	}
-
 	bool ProcessManager::IsProcessRansomware(int pid)
 	{
 		mtx_.Lock();
@@ -241,49 +195,11 @@ namespace proc_mon
 		return ans;
 	}
 
-	bool ProcessManager::IsProcessForcedRansomware(int pid)
-	{
-		mtx_.Lock();
-		bool ans = false;
-		if (pid >= processes_.Size() || processes_[pid] == nullptr)
-		{
-			mtx_.Unlock();
-			return false;
-		}
-		ans = processes_[pid]->forced_ransom_;
-		mtx_.Unlock();
-		return ans;
-	}
-
-
-	void ProcessNotifyCallBackEx(PEPROCESS eprocess, size_t pid, PPS_CREATE_NOTIFY_INFO create_info)
+	void ProcessNotifyCallBackEx(PEPROCESS eprocess, int pid, PPS_CREATE_NOTIFY_INFO create_info)
 	{
 		if (create_info) // Process creation
-		{
-			if (create_info->ImageFileName == nullptr || create_info->FileOpenNameAvailable == FALSE)
-			{
-				return;
-			}
-
-			String<WCHAR> process_image_name(*(create_info)->ImageFileName);
-			if (String<WCHAR>(L"\\??\\").IsPrefixOf(process_image_name))
-			{
-				process_image_name = &process_image_name[String<WCHAR>(L"\\??\\").Size()];
-			}
-			
-			p_manager->AddProcess(pid, (int)create_info->ParentProcessId);
-			// If image has "ransom", add to blacklist
-			if (process_image_name.Find(L"ransom") != static_cast<size_t>(-1))
-			{
-				p_manager->SetForcedRansomPid(pid);
-				DebugMessage("Forced ransomware: %lld", pid);
-			}
-			else if (p_manager->IsProcessForcedRansomware((int)create_info->ParentProcessId))
-			{
-				p_manager->SetForcedRansomPid(pid);
-				DebugMessage("Forced ransomware: %lld", pid);
-			}
-			
+		{	
+			p_manager->AddProcess(pid, (int)(create_info->ParentProcessId));
 		}
 		else // Process termination
 		{
