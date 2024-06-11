@@ -101,6 +101,8 @@ namespace ransom {
         bool isChiSquareRandom = (chiSquareValue < CHI_SQUARE_THRESHOLD);
         bool isArchive = (correlation > SERIAL_BYTE_CORRELATION_COEFFICIENT_THRESHOLD);
 
+        Clean();
+
         if (isArchive)
         {
             return false;
@@ -114,6 +116,20 @@ namespace ransom {
     long long DataAnalyzer::GetSize()
     {
         return size_;
+    }
+
+    void DataAnalyzer::Clean()
+    {
+        size_ = 0;
+        for (int i = 0; i < 256; i++)
+        {
+            freq_[i] = 0;
+        }
+        sum_ui_ui_plus_1_ = 0;
+        sum_ui_ = 0;
+        sum_ui_squared_ = 0;
+        last_byte_ = 0;
+        first_byte_ = 0;
     }
 
 }

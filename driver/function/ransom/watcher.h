@@ -40,6 +40,7 @@ namespace ransom
         void AddData(const Vector<unsigned char>& new_data);
         bool IsRandom();
         long long GetSize();
+        void Clean();
         ~DataAnalyzer() = default;
     };
 
