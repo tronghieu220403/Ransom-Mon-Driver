@@ -35,33 +35,29 @@ namespace ransom
 
 	void KillRansomPids(int pid)
 	{
-		Vector<int> ransom_child = proc_mon::p_manager->GetDescendants(pid);
-		for (int i = 0; i < ransom_child.Size(); ++i)
+		if (proc_mon::p_manager->KillProcess(pid) == false)
 		{
-			if (proc_mon::p_manager->KillProcess(ransom_child[i]) == false)
-			{
-				DebugMessage("Failed to kill ransomware process pid: %d", ransom_child[i]);
-			}
-			else
-			{
-				DebugMessage("Killed: %d", ransom_child[i]);
-			}
+			DebugMessage("Failed to kill ransomware process pid: %d", pid);
+		}
+		else
+		{
+			DebugMessage("Killed: %d", pid);
 		}
 	}
 
 	FLT_PREOP_CALLBACK_STATUS PreWriteOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
 	{
-
+		
 		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
 		ULONG length = data->Iopb->Parameters.Write.Length;
 		//DebugMessage("Pid %d with length: %d", pid, length);
 		unsigned char* buffer = nullptr;
+		
 		if (data->Iopb->Parameters.Write.MdlAddress != nullptr)
 		{
 			buffer = (unsigned char*)MmGetSystemAddressForMdlSafe(data->Iopb->Parameters.Write.MdlAddress,
 				NormalPagePriority | MdlMappingNoExecute);
 			if (buffer == nullptr) {
-
 				data->IoStatus.Status = STATUS_INSUFFICIENT_RESOURCES;
 				data->IoStatus.Information = 0;
 				//DebugMessage("STATUS_INSUFFICIENT_RESOURCES");
@@ -85,20 +81,18 @@ namespace ransom
 		}
 
 		AddData(pid, write_data);
-		
+
 		if (IsPidRansomware(pid) == true)
 		{
 			DebugMessage("Ransomware pid detected: %d", pid);
 			KillRansomPids(pid);
 		}
-
+		
 		return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 	}
 
 	FLT_POSTOP_CALLBACK_STATUS PostWriteOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _In_ PVOID completion_context, _In_ FLT_POST_OPERATION_FLAGS flags)
 	{
-		// Handle 
-
 		return FLT_POSTOP_FINISHED_PROCESSING;
 	}
 

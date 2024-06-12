@@ -697,7 +697,6 @@ inline bool String<T>::operator==(const String<T>& str)
 template<class T>
 inline T* String<T>::Allocate(size_t n)
 {
-	//T* p = (T *)krnl_std::Alloc( (n + 1) * sizeof(T));
 	T* p = new T[n + 1];
 	p[n] = T();
 	return p;
@@ -706,11 +705,6 @@ inline T* String<T>::Allocate(size_t n)
 template<class T>
 inline void String<T>::Deallocate()
 {
-	if (elements_ == nullptr)
-	{
-		return;
-	}
-	// krnl_std::Free(elements_);
-	delete elements_;
+	delete[] elements_;
 	elements_ = 0;
 }
