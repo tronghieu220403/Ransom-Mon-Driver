@@ -6,32 +6,7 @@ namespace proc_mon
 	{
 		p_manager = new ProcessManager();
 		NTSTATUS status;
-		/*
-		for (int i = 0; i < 10000; i++)
-		{
-			if (i % 1000 == 0)
-			{
-				DebugMessage("Add process %d", i);
-			}
-			p_manager->AddProcess(i);
-		}
-		Vector<unsigned char> data(10000);
-		for (int i = 0; i < 10000; i++)
-		{
-			for (int j = 0; j < 10; j++)
-			{
-				p_manager->AddData(i, &data);
-			}
-			if (i % 1000 == 0)
-			{
-				DebugMessage("Add data %d", i);
-				if (p_manager->IsProcessRansomware(i))
-				{
-					DebugMessage("ggez");
-				}
-			}
-		}
-		*/
+		
 		status = PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)&proc_mon::ProcessNotifyCallBackEx, FALSE);
 		if (STATUS_SUCCESS != status)
 		{
