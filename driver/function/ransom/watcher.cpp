@@ -95,21 +95,23 @@ namespace ransom {
             return false;
         }
 
-        long long chiSquareValue = ChiSquareTest();
+        long long chi_square_value = ChiSquareTest();
         long long correlation = SerialByteCorrelationCoefficient();
 
-        bool isChiSquareRandom = (chiSquareValue < CHI_SQUARE_THRESHOLD);
-        bool isArchive = (correlation > SERIAL_BYTE_CORRELATION_COEFFICIENT_THRESHOLD);
+        bool is_chi_square_random = (chi_square_value < CHI_SQUARE_THRESHOLD);
+        bool is_archive = (correlation > SERIAL_BYTE_CORRELATION_COEFFICIENT_THRESHOLD);
 
         Clean();
 
-        if (isArchive)
+        DebugMessage("%lld %lld", chi_square_value, correlation);
+
+        if (is_archive)
         {
             return false;
         }
         else
         {
-            return isChiSquareRandom;
+            return is_chi_square_random;
         }
     }
 
