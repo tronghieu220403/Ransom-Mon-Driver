@@ -20,6 +20,7 @@ namespace com
 
 			if (NT_SUCCESS(status))
 			{
+				DebugMessage("ComPort creation: oke.");
 				return status;
 			}
 			else
@@ -32,16 +33,25 @@ namespace com
 
 	NTSTATUS ComPort::Send(PVOID sender_buffer, ULONG sender_buffer_length)
 	{
-		LARGE_INTEGER large_int = { 0 };
-		return FltSendMessage(p_filter_handle_,
+		LARGE_INTEGER timeout;
+		timeout.QuadPart = -500000; // 0.05s
+		NTSTATUS status = FltSendMessage(p_filter_handle_,
 			&client_port_,
 			sender_buffer,
 			sender_buffer_length,
 			NULL,
 			NULL,
-			&large_int
+			&timeout
 		);
-
+		if (status != STATUS_SUCCESS)
+		{
+			DebugMessage("Send fail, status %x", status);
+		}
+		else
+		{
+			DebugMessage("Send oke, length %x, ", sender_buffer_length);
+		}
+		return status;
 	}
 
 	NTSTATUS ComPort::Close()
@@ -95,25 +105,11 @@ namespace com
 		UNREFERENCED_PARAMETER(output_buffer_length);
 		UNREFERENCED_PARAMETER(return_output_buffer_length);
 
-		/*
 		NTSTATUS status = STATUS_SUCCESS;
 
 		PAGED_CODE();
 
-		__try {
-
-			//
-			//  Probe and capture input message: the message is raw user mode
-			//  buffer, so need to  protect with exception handler
-			//
-
-			ProbeForRead(input_buffer, input_buffer_length, TYPE_ALIGNMENT(char));
-
-		}
-		__except(EXCEPTION_EXECUTE_HANDLER) {
-
-			return GetExceptionCode();
-		}
+		DebugMessage("output_buffer_length %d", output_buffer_length);
 
 		if (!IS_ALIGNED(output_buffer, sizeof(char)))
 		{
@@ -134,8 +130,18 @@ namespace com
 		PCHAR msg = (char *)"kernel msg";
 		// DebugMessage("user msg is : % s \r\n", (PCHAR)input_buffer);
 
+
 		RtlCopyMemory(&output_buffer, msg, sizeof(msg));
-		*/
+
+		__try {
+
+			ProbeForRead(input_buffer, input_buffer_length, TYPE_ALIGNMENT(char));
+
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER) {
+
+			return GetExceptionCode();
+		}
 
 		return STATUS_SUCCESS;
 	}

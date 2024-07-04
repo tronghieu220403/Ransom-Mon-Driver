@@ -8,7 +8,9 @@
 #include "../function/ransom/ransom-flt.h"
 #include "../process/ps-monitor.h"
 #include "../com/ioctl/ioctl.h"
+#include "../com/comport/comport.h"
 #include "debug.h"
+#include "MiniFs.h"
 
 namespace reg
 {
@@ -34,6 +36,8 @@ namespace reg
 	);
 
 	void FltRegister();
+
+	void PostFltRegister();
 
 	void DrvUnload(PDRIVER_OBJECT driver_object);
 

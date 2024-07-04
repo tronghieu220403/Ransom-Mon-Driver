@@ -42,12 +42,22 @@ namespace reg
 		
 		ransom::FltRegister();
 
+		com::kComPort = new com::ComPort();
+
 		return;
+	}
+
+	void PostFltRegister()
+	{
+		com::kComPort->SetPfltFilter(kFilterHandle);
+		com::kComPort->Create();
 	}
 
 	void FltUnload()
 	{
 		delete kFltFuncVector;
+
+		com::kComPort->Close();
 
 		ransom::FltUnload();
 

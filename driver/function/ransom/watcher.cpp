@@ -2,7 +2,7 @@
 
 namespace ransom {
 
-    long long DataAnalyzer::ChiSquareTest() {
+    long long EntropyAnalyzer::ChiSquareTest() {
 
         long long chi_square = 0;
 
@@ -19,7 +19,7 @@ namespace ransom {
         return chi_square / (size_ >> 8);
     }
 
-    long long DataAnalyzer::SerialByteCorrelationCoefficient() {
+    long long EntropyAnalyzer::SerialByteCorrelationCoefficient() {
         if (size_ < 2) {
             return INT_MAX;
         }
@@ -43,7 +43,7 @@ namespace ransom {
         return correlation;
     }
 
-    void DataAnalyzer::UpdateChiSquareTest(const Vector<unsigned char>& data)
+    void EntropyAnalyzer::UpdateChiSquareTest(const Vector<unsigned char>& data)
     {
         long long sz = data.Size();
 
@@ -54,7 +54,7 @@ namespace ransom {
         size_ += sz;
     }
 
-    void DataAnalyzer::UpdateSerialByteCorrelationCoefficient(const Vector<unsigned char>& data)
+    void EntropyAnalyzer::UpdateSerialByteCorrelationCoefficient(const Vector<unsigned char>& data)
     {
         long long sz = data.Size();
         for (long long i = 0; i < sz - 1; ++i)
@@ -73,7 +73,7 @@ namespace ransom {
         }
     }
 
-    void DataAnalyzer::AddData(const Vector<unsigned char>& new_data) {
+    void EntropyAnalyzer::AddData(const Vector<unsigned char>& new_data) {
 
         if (size_ == 0)
         {
@@ -88,7 +88,7 @@ namespace ransom {
     }
 
 
-    bool DataAnalyzer::IsRandom() {
+    bool EntropyAnalyzer::IsRandom() {
 
         if (size_ < MINIMUM_BYTES)
         {
@@ -115,12 +115,12 @@ namespace ransom {
         }
     }
 
-    long long DataAnalyzer::GetSize()
+    long long EntropyAnalyzer::GetSize()
     {
         return size_;
     }
 
-    void DataAnalyzer::Clean()
+    void EntropyAnalyzer::Clean()
     {
         size_ = 0;
         for (int i = 0; i < 256; i++)

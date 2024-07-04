@@ -211,6 +211,8 @@ Return Value:
         }
     }
 
+    reg::PostFltRegister();
+
     return status;
 }
 

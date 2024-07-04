@@ -16,7 +16,7 @@
 
 namespace ransom
 {
-    class DataAnalyzer {
+    class EntropyAnalyzer {
     private:
 
         long long size_ = 0;
@@ -36,12 +36,12 @@ namespace ransom
 
     public:
 
-        DataAnalyzer() = default;
+        EntropyAnalyzer() = default;
         void AddData(const Vector<unsigned char>& new_data);
         bool IsRandom();
         long long GetSize();
         void Clean();
-        ~DataAnalyzer() = default;
+        ~EntropyAnalyzer() = default;
     };
 
 }

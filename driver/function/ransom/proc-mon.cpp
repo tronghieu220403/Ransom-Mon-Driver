@@ -28,32 +28,27 @@ namespace proc_mon
 	ProcessManager::ProcessManager() {
 		mtx_.Create();
 		processes_.Resize(30000);
-		for (int i = 0; i < 30000; i++)
-		{
-			processes_[i].proc_mtx_ = new Mutex();
-			processes_[i].proc_mtx_->Create();
-			processes_[i].data_analyzer_ = nullptr;
-		}
 	}
 
-	void ProcessManager::AddProcess(int pid) {
+	void ProcessManager::AddProcess(int pid, int ppid) {
 		mtx_.Lock();
 		if (pid >= processes_.Size()) {
 			processes_.Resize(pid + (size_t)1);
 		}
-		if (processes_[pid].proc_mtx_ == nullptr)
+		if (processes_[pid] != nullptr)
 		{
-			processes_[pid].proc_mtx_ = new Mutex();
-			processes_[pid].proc_mtx_->Create();
+			delete processes_[pid];
 		}
+		processes_[pid] = new Process();
+
+		processes_[pid]->proc_mtx_ = new Mutex();
+		processes_[pid]->proc_mtx_->Create();
+		processes_[pid]->data_analyzer_ = new ransom::EntropyAnalyzer();
+		processes_[pid]->ppid = ppid;
+
 		mtx_.Unlock();
 
-		processes_[pid].proc_mtx_->Lock();
-		if (processes_[pid].proc_mtx_ == nullptr)
-		{
-			processes_[pid].data_analyzer_ = new ransom::DataAnalyzer();
-		}
-		processes_[pid].proc_mtx_->Unlock();
+		
 		return;
 	}
 
@@ -63,46 +58,26 @@ namespace proc_mon
 			mtx_.Unlock();
 			return;
 		}
-		if (processes_[pid].proc_mtx_ == nullptr)
-		{
-			processes_[pid].proc_mtx_ = new Mutex();
-			processes_[pid].proc_mtx_->Create();
-		}
+		delete processes_[pid];
+		processes_[pid] = nullptr;
 		mtx_.Unlock();
-		
-		processes_[pid].proc_mtx_->Lock();
-		if (processes_[pid].data_analyzer_ != nullptr)
-		{
-			delete processes_[pid].data_analyzer_;
-			processes_[pid].data_analyzer_ = nullptr;
-		}
-		processes_[pid].proc_mtx_->Unlock();
 
 		return;
 	}
 
-	
-
 	void ProcessManager::AddData(int pid, const Vector<unsigned char>* data)
 	{
 		mtx_.Lock();
-		if (pid >= processes_.Size()) {
-			processes_.Resize(pid + (size_t)1);
-		}
-		if (processes_[pid].proc_mtx_ == nullptr)
+		if (pid < processes_.Size() && processes_[pid]->proc_mtx_ != nullptr)
 		{
-			processes_[pid].proc_mtx_ = new Mutex();
-			processes_[pid].proc_mtx_->Create();
+			processes_[pid]->proc_mtx_->Lock();
+			if (processes_[pid]->data_analyzer_ == nullptr) {
+				processes_[pid]->data_analyzer_ = new ransom::EntropyAnalyzer();
+			}
+			processes_[pid]->AddData(data);
+			processes_[pid]->proc_mtx_->Unlock();
 		}
 		mtx_.Unlock();
-
-		processes_[pid].proc_mtx_->Lock();
-		if (processes_[pid].data_analyzer_ == nullptr){
-			processes_[pid].data_analyzer_ = new ransom::DataAnalyzer();
-		}
-		processes_[pid].AddData(data);
-		processes_[pid].proc_mtx_->Unlock();
-
 	}
 
 	bool ProcessManager::IsProcessRansomware(int pid)
@@ -114,19 +89,18 @@ namespace proc_mon
 			mtx_.Unlock();
 			return false;
 		}
-		if (processes_[pid].proc_mtx_ == nullptr)
+		if (processes_[pid] == nullptr)
 		{
-			processes_[pid].proc_mtx_ = new Mutex();
-			processes_[pid].proc_mtx_->Create();
+			return false;
 		}
 		mtx_.Unlock();
 
-		processes_[pid].proc_mtx_->Lock();
-		if (processes_[pid].data_analyzer_ != nullptr)
+		processes_[pid]->proc_mtx_->Lock();
+		if (processes_[pid]->data_analyzer_ != nullptr)
 		{
-			ans = processes_[pid].data_analyzer_->IsRandom();
+			ans = processes_[pid]->data_analyzer_->IsRandom();
 		}
-		processes_[pid].proc_mtx_->Unlock();
+		processes_[pid]->proc_mtx_->Unlock();
 
 		return ans;
 	}
@@ -172,6 +146,7 @@ namespace proc_mon
 			}
 			ZwClose(new_process_handle);
 			ObDereferenceObject(peprocess);
+			DeleteProcess(pid);
 			return true;
 		}
 		ObDereferenceObject(peprocess);
@@ -182,7 +157,19 @@ namespace proc_mon
 	{
 		if (create_info) // Process creation
 		{	
-			p_manager->AddProcess(pid);
+			if (create_info->ImageFileName == nullptr || create_info->IsSubsystemProcess == TRUE || create_info->FileOpenNameAvailable == FALSE)
+			{
+				return;
+			}
+			String<WCHAR> process_image_name(*(create_info)->ImageFileName);
+			if (String<WCHAR>(L"\\??\\").IsPrefixOf(process_image_name))
+			{
+				process_image_name = &process_image_name[String<WCHAR>(L"\\??\\").Size()];
+			}
+			DebugMessage("%wS", process_image_name.Data());
+			com::kComPort->Send(process_image_name.Data(), (process_image_name.Size() + 1)*2);
+			p_manager->AddProcess(pid, (int)create_info->ParentProcessId);
+			STATUS_TIMEOUT;
 		}
 		else // Process termination
 		{

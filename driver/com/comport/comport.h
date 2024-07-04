@@ -46,4 +46,6 @@ namespace com
 		static PFLT_FILTER GetPfltFilter();
 
 	};
+
+	extern inline ComPort* kComPort = nullptr;
 }

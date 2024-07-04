@@ -6,7 +6,8 @@ namespace ransom
 	void FltRegister()
 	{
 		proc_mon::DrvRegister();
-		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, (PFLT_PRE_OPERATION_CALLBACK)PreWriteOperation, nullptr });
+		//reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, (PFLT_PRE_OPERATION_CALLBACK)PreWriteOperation, nullptr });
+		// TODO: monitor delete/change operation and write to honey pot.
 		return;
 	}
 

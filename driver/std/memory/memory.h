@@ -61,8 +61,12 @@ namespace krnl_std
 {
     inline void* Alloc(size_t n)
     {
-        void* p;
+        void* p = nullptr;
         p = ExAllocatePool2(POOL_FLAG_NON_PAGED, n, 0x22042003);
+        if (p != nullptr)
+        {
+            RtlZeroMemory(p, n);
+        }
         return p;
     }
 

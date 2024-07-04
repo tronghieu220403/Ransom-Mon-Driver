@@ -25,7 +25,7 @@ Environment:
 #pragma prefast(disable:__WARNING_ENCODE_MEMBER_FUNCTION_POINTER, "Not valid for kernel mode drivers")
 
 
-PFLT_FILTER kFilterHandle;
+extern inline PFLT_FILTER kFilterHandle = nullptr;
 
 #define PTDBG_TRACE_ROUTINES            0x00000001
 #define PTDBG_TRACE_OPERATION_STATUS    0x00000002
