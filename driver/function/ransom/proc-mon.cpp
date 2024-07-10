@@ -30,6 +30,14 @@ namespace proc_mon
 		processes_.Resize(30000);
 	}
 
+	bool ProcessManager::Exist(int pid)
+	{
+		mtx_.Lock();
+		bool ret = processes_[pid] != nullptr;
+		mtx_.Unlock();
+		return ret;
+	}
+
 	void ProcessManager::AddProcess(int pid, int ppid) {
 		mtx_.Lock();
 		if (pid >= processes_.Size()) {
@@ -44,17 +52,18 @@ namespace proc_mon
 		processes_[pid]->proc_mtx_ = new Mutex();
 		processes_[pid]->proc_mtx_->Create();
 		processes_[pid]->data_analyzer_ = new ransom::EntropyAnalyzer();
-		processes_[pid]->ppid = ppid;
+		processes_[pid]->ppid_ = ppid;
+		processes_[pid]->delete_or_overwrite_ = false;
+		processes_[pid]->honey_ = new ransom::HoneyAnalyzer();
 
 		mtx_.Unlock();
-
 		
 		return;
 	}
 
 	void ProcessManager::DeleteProcess(int pid) {
 		mtx_.Lock();
-		if (pid >= processes_.Size()) {
+		if (pid >= processes_.Size() || processes_[pid] == nullptr) {
 			mtx_.Unlock();
 			return;
 		}
@@ -80,6 +89,26 @@ namespace proc_mon
 		mtx_.Unlock();
 	}
 
+	void ProcessManager::MarkDeleteOrOverwrite(int pid)
+	{
+		mtx_.Lock();
+		if (pid < processes_.Size() && processes_[pid] != nullptr)
+		{
+			processes_[pid]->delete_or_overwrite_ = true;
+		}
+		mtx_.Unlock();
+	}
+
+	void ProcessManager::IncHoneyCnt(int pid)
+	{
+		mtx_.Lock();
+		if (pid < processes_.Size() && processes_[pid] != nullptr)
+		{
+			processes_[pid]->honey_->IncHoneyCnt();
+		}
+		mtx_.Unlock();
+	}
+
 	bool ProcessManager::IsProcessRansomware(int pid)
 	{
 		bool ans = false;
@@ -91,18 +120,40 @@ namespace proc_mon
 		}
 		if (processes_[pid] == nullptr)
 		{
+			mtx_.Unlock();
 			return false;
 		}
 		mtx_.Unlock();
 
 		processes_[pid]->proc_mtx_->Lock();
-		if (processes_[pid]->data_analyzer_ != nullptr)
+		if (processes_[pid]->honey_->IsThresholdReached() == true)
+		{
+			ans = true;
+			goto end_of_ransom_identification;
+		}
+		if (processes_[pid]->data_analyzer_ != nullptr && processes_[pid]->delete_or_overwrite_ == true)
 		{
 			ans = processes_[pid]->data_analyzer_->IsRandom();
 		}
+		end_of_ransom_identification:
 		processes_[pid]->proc_mtx_->Unlock();
 
 		return ans;
+	}
+
+	void ProcessManager::KillAll()
+	{
+		mtx_.Lock();
+		for (int pid = 0; pid < processes_.Size(); pid++)
+		{
+			if (processes_[pid] != nullptr)
+			{
+				KillProcess(pid);
+				delete processes_[pid];
+				processes_[pid] = nullptr;
+			}
+		}
+		mtx_.Unlock();
 	}
 
 	bool ProcessManager::KillProcess(int pid)
@@ -146,7 +197,6 @@ namespace proc_mon
 			}
 			ZwClose(new_process_handle);
 			ObDereferenceObject(peprocess);
-			DeleteProcess(pid);
 			return true;
 		}
 		ObDereferenceObject(peprocess);
@@ -155,21 +205,29 @@ namespace proc_mon
 
 	void ProcessNotifyCallBackEx(PEPROCESS eprocess, int pid, PPS_CREATE_NOTIFY_INFO create_info)
 	{
+		if (isEnabled == false)
+		{
+			return;
+		}
 		if (create_info) // Process creation
 		{	
 			if (create_info->ImageFileName == nullptr || create_info->IsSubsystemProcess == TRUE || create_info->FileOpenNameAvailable == FALSE)
 			{
 				return;
 			}
+
 			String<WCHAR> process_image_name(*(create_info)->ImageFileName);
 			if (String<WCHAR>(L"\\??\\").IsPrefixOf(process_image_name))
 			{
 				process_image_name = &process_image_name[String<WCHAR>(L"\\??\\").Size()];
 			}
 			DebugMessage("%wS", process_image_name.Data());
-			com::kComPort->Send(process_image_name.Data(), (process_image_name.Size() + 1)*2);
-			p_manager->AddProcess(pid, (int)create_info->ParentProcessId);
-			STATUS_TIMEOUT;
+
+			bool is_valid = false;
+			if (com::kComPort->Send(process_image_name.Data(), (process_image_name.Size() + 1) * 2, &is_valid, sizeof(bool)) != STATUS_SUCCESS || is_valid == false)
+			{
+				p_manager->AddProcess(pid, (int)create_info->ParentProcessId);
+			}
 		}
 		else // Process termination
 		{

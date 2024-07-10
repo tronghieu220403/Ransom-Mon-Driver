@@ -127,6 +127,12 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 		str = cmd->ParseUnprotectDir().dir_path;
 		break;
 
+	case IOCTL_CMD_CLASS::kEnableRansom:
+		isEnabled = true;
+		break;
+	case IOCTL_CMD_CLASS::kDisableRansom:
+		isEnabled = false;
+		break;
 	default:
 		break;
 	}

@@ -5,6 +5,7 @@
 #include "../../std/sync/mutex.h"
 #include "../../com/comport/comport.h"
 
+#include "config.h"
 #include "watcher.h"
 
 namespace proc_mon
@@ -13,12 +14,14 @@ namespace proc_mon
 
         Mutex* proc_mtx_;
         ransom::EntropyAnalyzer* data_analyzer_;
-        
-        int ppid = 0;
+        ransom::HoneyAnalyzer* honey_;
+
+        int ppid_ = 0;
+        bool delete_or_overwrite_ = 0;
 
         void AddData(const Vector<unsigned char>* data);
 
-        Process() : data_analyzer_(nullptr), proc_mtx_(nullptr){
+        Process() : data_analyzer_(nullptr), proc_mtx_(nullptr), honey_(nullptr){
         };
 
         ~Process() {
@@ -26,6 +29,8 @@ namespace proc_mon
             proc_mtx_ = nullptr;
             delete data_analyzer_;
             proc_mtx_ = nullptr;
+            delete honey_;
+            honey_ = nullptr;
         }
     };
 
@@ -36,14 +41,19 @@ namespace proc_mon
     public:
         ProcessManager();
         
+        bool Exist(int pid);
+
         void AddProcess(int pid, int ppid);
         void DeleteProcess(int pid);
         bool KillProcess(int pid);
 
         void AddData(int pid, const Vector<unsigned char>* data);
+        void MarkDeleteOrOverwrite(int pid);
+        void IncHoneyCnt(int pid);
 
         bool IsProcessRansomware(int pid);
 
+        void KillAll();
     };
 
     extern inline ProcessManager* p_manager = nullptr;

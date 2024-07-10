@@ -134,4 +134,14 @@ namespace ransom {
         first_byte_ = 0;
     }
 
+    void HoneyAnalyzer::IncHoneyCnt()
+    {
+        honey_cnt++;
+    }
+
+    bool HoneyAnalyzer::IsThresholdReached()
+    {
+        return honey_cnt >= HONEY_CNT_THRESHOLD;
+    }
+
 }

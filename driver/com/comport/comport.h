@@ -18,7 +18,7 @@ namespace com
 
 	public:
 		static NTSTATUS Create();
-		static NTSTATUS Send(PVOID sender_buffer, ULONG sender_buffer_length);
+		NTSTATUS Send(PVOID sender_buffer, ULONG sender_buffer_length, void* reply_buffer, ULONG reply_buffer_length);
 		static NTSTATUS Close();
 
 		static NTSTATUS ConnectHandler(

@@ -11,8 +11,10 @@
 // real threshold is 0.0011
 #define SERIAL_BYTE_CORRELATION_COEFFICIENT_THRESHOLD 11
 #define SERIAL_BYTE_CORRELATION_COEFFICIENT_MULTIPLE 10000
-
 #define MINIMUM_BYTES 10485760 // 10MB
+
+#define HONEY_CNT_THRESHOLD 3
+#define HONEY_NAME L"hieunt_important"
 
 namespace ransom
 {
@@ -44,4 +46,12 @@ namespace ransom
         ~EntropyAnalyzer() = default;
     };
 
+    class HoneyAnalyzer
+    {
+    private:
+        int honey_cnt = 0;
+    public:
+        void IncHoneyCnt();
+        bool IsThresholdReached();
+    };
 }

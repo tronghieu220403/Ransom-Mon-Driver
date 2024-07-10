@@ -27,6 +27,9 @@ namespace ioctl
 		kUnhideProcImage = 0x80002010,
 		kProtectProcImage = 0x80002011,
 		kUnprotectProcImage = 0x80002012,
+		kEndAllRansomWatcher = 0x80002013,
+		kEnableRansom = 0x80002014,
+		kDisableRansom = 0x80002015,
 	};
 
 	struct IOCTL_CMD_HIDE_FILE

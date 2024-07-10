@@ -31,25 +31,24 @@ namespace com
 		return status;
 	}
 
-	NTSTATUS ComPort::Send(PVOID sender_buffer, ULONG sender_buffer_length)
+	NTSTATUS ComPort::Send(PVOID sender_buffer, ULONG sender_buffer_length, PVOID reply_buffer, ULONG reply_buffer_length)
 	{
 		LARGE_INTEGER timeout;
-		timeout.QuadPart = -500000; // 0.05s
+		timeout.QuadPart = -50000000; // 5s
 		NTSTATUS status = FltSendMessage(p_filter_handle_,
 			&client_port_,
 			sender_buffer,
 			sender_buffer_length,
-			NULL,
-			NULL,
+			reply_buffer,
+			&reply_buffer_length,
 			&timeout
 		);
-		if (status != STATUS_SUCCESS)
+		if (status != STATUS_SUCCESS && status != 0x11)
 		{
-			DebugMessage("Send fail, status %x", status);
 		}
 		else
 		{
-			DebugMessage("Send oke, length %x, ", sender_buffer_length);
+			status = STATUS_SUCCESS;
 		}
 		return status;
 	}
