@@ -31,7 +31,9 @@ using namespace std;
 
 bool VerifyEmbeddedSignature(LPCWSTR pwszSourceFile);
 wstring GetDosPath(const wstring* wstr);
-std::wstring getRandomFile(const std::string& directoryPath);
+string getRandomFile(const std::string& directoryPath);
+string copyFile(const std::string& sourcePath, const std::string& destinationPath);
+void copyDirectory(const fs::path& source, const fs::path& destination);
 
 
 struct COMPORT_MESSAGE

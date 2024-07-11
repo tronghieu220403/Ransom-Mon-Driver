@@ -4,7 +4,6 @@ bool Ioctl::Create()
 {
 	device_ = CreateFileW(HIEU_DEVICE, GENERIC_WRITE | GENERIC_READ | GENERIC_EXECUTE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_SYSTEM, 0);
 	return device_ != INVALID_HANDLE_VALUE;
-    1
 }
 
 vector<unsigned char> Ioctl::StartMonitor()
