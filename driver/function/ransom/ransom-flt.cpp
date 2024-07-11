@@ -137,17 +137,29 @@ namespace ransom
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 		}
 
+		String<WCHAR> file_name = flt::GetFileFullPathName(data);
+
 		if (data->Iopb->MajorFunction == IRP_MJ_SET_INFORMATION) {
 			switch (data->Iopb->Parameters.SetFileInformation.FileInformationClass) {
 			case FileAllocationInformation:
-				break;
 			case FileRenameInformation:
 			case FileRenameInformationEx:
 			case FileDispositionInformation:
 			case FileDispositionInformationEx:
 			case FileRenameInformationBypassAccessCheck:
 			case FileRenameInformationExBypassAccessCheck:
-
+				if (file_name.Size() != 0)
+				{
+					if (file_name.Find(HONEY_NAME) != static_cast<size_t>(-1))
+					{
+						IncPidHoneyCnt(pid);
+						if (IsPidRansomware(pid) == true)
+						{
+							DebugMessage("Ransomware pid detected: %d", pid);
+							KillRansomPids(pid);
+						}
+					}
+				}
 				break;
 
 			default:
