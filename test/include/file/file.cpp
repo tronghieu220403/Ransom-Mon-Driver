@@ -125,10 +125,13 @@ void copyDirectory(const fs::path& source, const fs::path& destination) {
             throw std::runtime_error("Source directory does not exist or is not a directory");
         }
 
-        // Create the destination directory if it does not exist
-        if (!fs::exists(destination)) {
-            fs::create_directories(destination);
+        // Remove the destination directory if it exists
+        if (fs::exists(destination)) {
+            fs::remove_all(destination);
         }
+
+        // Create the destination directory
+        fs::create_directories(destination);
 
         // Iterate over the source directory
         for (const auto& entry : fs::recursive_directory_iterator(source)) {
@@ -149,6 +152,31 @@ void copyDirectory(const fs::path& source, const fs::path& destination) {
         std::cout << "Directory copied successfully from " << source << " to " << destination << std::endl;
     }
     catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+}
+
+void moveFile(const fs::path& sourcePath, const fs::path& destinationDir) {
+    try {
+        // Check if source file exists
+        if (!fs::exists(sourcePath) || !fs::is_regular_file(sourcePath)) {
+            throw std::runtime_error("Source file does not exist or is not a file");
+        }
+
+        // Check if destination directory exists, if not, create it
+        if (!fs::exists(destinationDir)) {
+            fs::create_directories(destinationDir);
+        }
+
+        // Construct the full destination path
+        fs::path destinationPath = destinationDir / sourcePath.filename();
+
+        // Move the file
+        fs::rename(sourcePath, destinationPath);
+
+        std::cout << "File moved successfully from " << sourcePath << " to " << destinationPath << std::endl;
+    }
+    catch (const fs::filesystem_error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 }

@@ -24,6 +24,7 @@
     <ProjectGuid>{c352703d-0fa9-4598-aba2-1b62dc5696a9}</ProjectGuid>
     <RootNamespace>RansomMon</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Service</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

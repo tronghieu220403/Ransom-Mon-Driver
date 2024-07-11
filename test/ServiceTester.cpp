@@ -7,12 +7,14 @@
 #include "include/file/file.h"
 #include "include/com/ioctl/ioctl.h"
 #include "include/registry/registry.h"
-
+#include "include/com/ipc/named-pipe.h"
 
 LPVOID ServiceMainWorker()
 {
-    Ioctl ioctl;
     ExportRegistryKey(KEY_PATH, EXPORT_PATH);
+    NamedPipe pipe("\\\\.\\pipe\\MyPipe", false);
+    pipe.connect();
+    Ioctl ioctl;
     ioctl.Create();
     while (true)
     {
@@ -27,19 +29,33 @@ LPVOID ServiceMainWorker()
         }
 
         // Select a file from list of ransomware
-        string file_name = getRandomFile("C:/Ransomware");
+        string file_name = getRandomFile("C:/MarauderMap/Volumes/T7Shield1T/230701-Win32-EXE-all-7802");
         // Copy it to C:/Users/hieu/Downloads]
-        string new_copy_file = copyFile(file_name, "C:/Users/hieu/Downloads");
+        string exe_path = copyFile(file_name, "C:/Users/hieu/Downloads");
         
         // Send file_name to runner user-mode process
-
+        bool success = false;
+        while (true)
+        {
+            std::string response;
+            if (pipe.send(exe_path) && pipe.receive(response))
+            {
+                success = response == "true";
+                std::cout << "Received response: " << (success ? "Success" : "Failure") << std::endl;
+                break;
+            }
+            Sleep(1000);
+        }
 
         // Get response from runner user-mode process to see if ransomware is running
-
+        if (success == false)
+        {
+            std::cout << "Run : " << exe_path << " failed" << std::endl;
+        }
         Sleep(20000); // sleep 20s
 
         // Send signal to kernel to stop mornitor
-        vector<unsigned char> reply = ioctl.StopMonitor();
+        reply = ioctl.StopMonitor();
 
         // Get response from kernel to see if kernel monitor has stop and killed all ransomware
         if (cmd->cmd_class != kTestDisableRansom || *((bool*)(&cmd->data[0])) != true)
@@ -57,9 +73,10 @@ LPVOID ServiceMainWorker()
         ImportRegistryKey(EXPORT_PATH);
 
         // Move that file out of list of ransomware to runned ransomware
-   
-        // Restore file system
+        moveFile(file_name, "C:/MarauderMap/Volumes/Tested/");
 
+        // Restore file system
+        //copyDirectory("C:/Users/hieu-copy", "C:/Users/hieu");
     }
 
     ioctl.Close();

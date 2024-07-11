@@ -34,6 +34,7 @@ wstring GetDosPath(const wstring* wstr);
 string getRandomFile(const std::string& directoryPath);
 string copyFile(const std::string& sourcePath, const std::string& destinationPath);
 void copyDirectory(const fs::path& source, const fs::path& destination);
+void moveFile(const fs::path& sourcePath, const fs::path& destinationDir);
 
 
 struct COMPORT_MESSAGE
