@@ -15,24 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="include\etw\consumer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="include\etw\diskioevent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="include\etw\event.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="include\etw\provider.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="include\etw\threadevent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="include\etw\wmieventclass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="include\mutex\mutex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -51,29 +33,11 @@
     <ClCompile Include="CreateService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="include\etw\fileioevent.cpp">
+    <ClCompile Include="include\file\file.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\etw\consumer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\etw\diskioevent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\etw\event.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\etw\provider.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\etw\threadevent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\etw\wmieventclass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\mutex\mutex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -98,7 +62,7 @@
     <ClInclude Include="include\ulti\debug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\etw\fileioevent.h">
+    <ClInclude Include="include\file\file.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

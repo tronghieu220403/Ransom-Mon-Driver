@@ -83,6 +83,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalDependencies>fltlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -102,6 +103,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalDependencies>fltlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -117,6 +119,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalDependencies>fltlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -136,17 +139,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <AdditionalDependencies>fltlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CreateService.cpp" />
-    <ClCompile Include="include\etw\consumer.cpp" />
-    <ClCompile Include="include\etw\diskioevent.cpp" />
-    <ClCompile Include="include\etw\event.cpp" />
-    <ClCompile Include="include\etw\fileioevent.cpp" />
-    <ClCompile Include="include\etw\provider.cpp" />
-    <ClCompile Include="include\etw\threadevent.cpp" />
-    <ClCompile Include="include\etw\wmieventclass.cpp" />
+    <ClCompile Include="include\file\file.cpp" />
     <ClCompile Include="include\mutex\mutex.cpp" />
     <ClCompile Include="include\service\ransom-serv.cpp" />
     <ClCompile Include="include\service\service.cpp" />
@@ -154,13 +152,7 @@
     <ClCompile Include="include\service\serviceevent.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\etw\consumer.h" />
-    <ClInclude Include="include\etw\diskioevent.h" />
-    <ClInclude Include="include\etw\event.h" />
-    <ClInclude Include="include\etw\fileioevent.h" />
-    <ClInclude Include="include\etw\provider.h" />
-    <ClInclude Include="include\etw\threadevent.h" />
-    <ClInclude Include="include\etw\wmieventclass.h" />
+    <ClInclude Include="include\file\file.h" />
     <ClInclude Include="include\mutex\mutex.h" />
     <ClInclude Include="include\service\ransom-serv.h" />
     <ClInclude Include="include\service\service.h" />

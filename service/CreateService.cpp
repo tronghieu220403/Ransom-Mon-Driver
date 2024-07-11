@@ -1,89 +1,62 @@
 #ifndef RANSOMMON_RANSOMMON
 #define RANSOMMON_RANSOMMON
 
-#include "include/ulti/everything.h"
-#include "include/etw/wmieventclass.h"
-#include "include/etw/event.h"
-#include "include/etw/consumer.h"
-#include "include/etw/provider.h"
 #include "include/service/ransom-serv.h"
 #include "include/service/servicecontrol.h"
 #include "include/service/service.h"
+#include "include/file/file.h"
 
-bool provider_oke = false;
-bool comsumer_oke = false;
-
-void SetUpProvider()
+void VerifySignature()
 {
-    
-    ULONG status;
-    rm::KernelProvider kp(
-        EVENT_TRACE_FLAG_NO_SYSCONFIG
-        | EVENT_TRACE_FLAG_DISK_IO
-        | EVENT_TRACE_FLAG_THREAD
-        | EVENT_TRACE_FLAG_FILE_IO_INIT
-        | EVENT_TRACE_FLAG_FILE_IO
-        | EVENT_TRACE_FLAG_DISK_FILE_IO
-        | EVENT_TRACE_FLAG_PROCESS
-        );
-    status = kp.BeginTrace();
-    if (status != ERROR_SUCCESS && status != ERROR_ALREADY_EXISTS)
+    HANDLE hPort;
+    HRESULT hr;
+    COMPORT_MESSAGE buffer, reply;
+
+    while (true)
     {
-        rm::WriteDebug("Can not set up provider");
-        return;
+        hr = FilterConnectCommunicationPort(PORT_NAME, 0, NULL, 0, NULL, &hPort);
+        if (FAILED(hr))
+        {
+            Sleep(100);
+            continue;
+        }
+
+        while (TRUE)
+        {
+            hr = FilterGetMessage(hPort, (PFILTER_MESSAGE_HEADER)&buffer, sizeof(COMPORT_MESSAGE), NULL);
+            if (SUCCEEDED(hr))
+            {
+                bool is_valid = VerifyEmbeddedSignature(buffer.data);
+                reply.header = buffer.header;
+                reply.data[0] = is_valid;
+                if (!SUCCEEDED(FilterReplyMessage(hPort, (PFILTER_REPLY_HEADER)&reply, sizeof(FILTER_MESSAGE_HEADER) + sizeof(bool))))
+                {
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        CloseHandle(hPort);
+        Sleep(100);
     }
-    provider_oke = true;
-
-    Sleep(30*1000);
-
-    std::cout << "End trace" << std::endl;
-
-    kp.CloseTrace();
-}
-
-void SetUpComsumer()
-{
-    while (provider_oke == false)
-    {
-        Sleep(50);
-    }
-    
-    std::vector<rm::IoInfo> temp;
-    rm::KernelConsumer kc;
-    
-    if (kc.Open() != ERROR_SUCCESS)
-    {
-        rm::WriteDebug("Can not set up consummer kc.Open()");
-        return;
-    }
-
-    comsumer_oke = true;
-
-    std::cout << "Consumer oke";
-
-    if (kc.Process() != ERROR_SUCCESS)
-    {
-
-    }
-    
-    return;
 }
 
 LPVOID ServiceMainWorker()
 {
-    /*
-    std::jthread provider_thread(&SetUpProvider);
-    std::jthread comsumer_thread(&SetUpComsumer);
-    provider_thread.join();
-    comsumer_thread.join();
-    */
+
+    std::jthread verify_sig(&VerifySignature);
+    verify_sig.join();
 
     return nullptr;
 }
 
 int main()
 {
-    rm::ServiceControl service_control(L"aaaRanMon");
+    rm::ServiceControl service_control(L"RanMon");
 
     std::wstring w_path;
     w_path.resize(1000);
