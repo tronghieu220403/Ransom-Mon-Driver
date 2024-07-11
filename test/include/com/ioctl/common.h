@@ -1,3 +1,9 @@
+#include <Windows.h>
+
+#define IOCTL_HIEU CTL_CODE(FILE_DEVICE_UNKNOWN, 0x2204, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
+#define HIEU_DEVICE L"\\\\.\\HieuDeviceLink"
+
 enum IOCTL_CMD_CLASS
 {
 	kHideFile = 0x80002000,
@@ -18,9 +24,13 @@ enum IOCTL_CMD_CLASS
 	kUnhideProcImage = 0x80002010,
 	kProtectProcImage = 0x80002011,
 	kUnprotectProcImage = 0x80002012,
-	kTestDisableRansom = 0x80002013,
-	kEnableRansom = 0x80002014,
-	kDisableRansom = 0x80002015,
+	kEnableRansom = 0x80002013,
+	kDisableRansom = 0x80002014,
+
+	//Testing purpose
+	kTestEnableRansom = 0x80002015,
+	kTestDisableRansom = 0x80002016,
+	kTestDir = 0x80002017
 };
 
 struct IOCTL_CMD
