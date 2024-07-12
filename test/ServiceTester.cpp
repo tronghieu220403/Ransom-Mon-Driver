@@ -60,6 +60,10 @@ LPVOID ServiceMainWorker()
 
         // Select a file from list of ransomware
         string file_name = getRandomFile("C:/MarauderMap/Volumes/T7Shield1T/230701-Win32-EXE-all-7802");
+        if (file_name.size() == 0)
+        {
+            break;
+        }
         // Copy it to C:/Users/hieu/Downloads]
         string exe_path = copyFile(file_name, "C:/Users/hieu/Downloads");
         
