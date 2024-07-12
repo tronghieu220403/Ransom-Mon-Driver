@@ -101,6 +101,9 @@
     <ClInclude Include="function\ransom\config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="std\algo\hash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="template\MiniFs.cpp">

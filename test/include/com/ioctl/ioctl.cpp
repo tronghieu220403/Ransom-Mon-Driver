@@ -9,7 +9,7 @@ bool Ioctl::Create()
 vector<unsigned char> Ioctl::StartMonitor()
 {
     DWORD bytes_returned = 0;
-    const int output_sz = 20000;
+    const int output_sz = sizeof(bool);
     vector<unsigned char> output;
     output.resize(output_sz);
     BOOL status = FALSE;

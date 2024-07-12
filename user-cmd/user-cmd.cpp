@@ -39,12 +39,10 @@ int main() {
     while (true)
     {
         if (!pipe.connect()) {
-            std::cerr << "Failed to connect to the pipe" << std::endl;
             Sleep(1000);
             continue;
         }
 
-        cout << "Connect OKE" << endl;
         while (true)
         {
             std::string exePath;

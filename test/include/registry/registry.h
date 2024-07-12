@@ -4,8 +4,8 @@
 #include <iostream>
 #include <fstream>
 
-#define KEY_PATH "Software/Microsoft/Windows/CurrentVersion/Run"
-#define EXPORT_PATH "C:/RansomTestSuite/Registry/auto_run_backup.reg"
+#define KEY_PATH "SOFTWARE/Microsoft/Windows/CurrentVersion/Run"
+#define EXPORT_PATH "C:/MarauderMap"
 
 bool ExportRegistryKey(const std::string& keyPath, const std::string& exportPath);
 

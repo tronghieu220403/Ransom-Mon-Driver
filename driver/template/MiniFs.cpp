@@ -229,32 +229,12 @@ NTSTATUS
 MiniFsUnload (
     _In_ FLT_FILTER_UNLOAD_FLAGS flags
     )
-/*++
-
-Routine Description:
-
-    This is the unload routine for this miniFilter driver. This is called
-    when the minifilter is about to be unloaded. We can fail this unload
-    request if this is not a mandatory unload indicated by the flags
-    parameter.
-
-Arguments:
-
-    flags - Indicating if this is a mandatory unload.
-
-Return Value:
-
-    Returns STATUS_SUCCESS.
-
---*/
 {
     UNREFERENCED_PARAMETER( flags );
 
     PAGED_CODE();
 
     reg::FltUnload();
-
-    FltUnregisterFilter( kFilterHandle );
 
     DebugMessage("FilterUnloadRegistered");
 
@@ -271,30 +251,6 @@ MiniFsPreOperation (
     _In_ PCFLT_RELATED_OBJECTS flt_objects,
     _Flt_CompletionContext_Outptr_ PVOID *completion_context
     )
-/*++
-
-Routine Description:
-
-    This routine is a pre-operation dispatch routine for this miniFilter.
-
-    This is non-pageable because it could be called on the paging path
-
-Arguments:
-
-    data - Pointer to the filter callbackData that is passed to us.
-
-    flt_objects - Pointer to the FLT_RELATED_OBJECTS data structure containing
-        opaque handles to this filter, instance, its associated volume and
-        file object.
-
-    completion_context - The context for the completion routine for this
-        operation.
-
-Return Value:
-
-    The return value is the status of the operation.
-
---*/
 {
 
     UNREFERENCED_PARAMETER( completion_context );
@@ -396,17 +352,23 @@ Return Value:
         return FLT_POSTOP_FINISHED_PROCESSING;
     }
 
-
-    for (int i = 0; i < (*reg::kFltFuncVector).Size(); i++)
+    __try
     {
-        if (data->Iopb->MajorFunction == (*reg::kFltFuncVector)[i].irp_mj_function_code &&
-            (*reg::kFltFuncVector)[i].post_func != nullptr)
+        for (int i = 0; i < (*reg::kFltFuncVector).Size(); i++)
         {
-            if ((*(p->status))[i] != FLT_PREOP_SUCCESS_NO_CALLBACK && (*(p->status))[i] != FLT_PREOP_COMPLETE)
+            if (data->Iopb->MajorFunction == (*reg::kFltFuncVector)[i].irp_mj_function_code &&
+                (*reg::kFltFuncVector)[i].post_func != nullptr)
             {
-                (*reg::kFltFuncVector)[i].post_func(data, flt_objects, completion_context, flags);
+                if ((*(p->status))[i] != FLT_PREOP_SUCCESS_NO_CALLBACK && (*(p->status))[i] != FLT_PREOP_COMPLETE)
+                {
+                    (*reg::kFltFuncVector)[i].post_func(data, flt_objects, completion_context, flags);
+                }
             }
         }
+    }
+    __finally
+    {
+
     }
     DeallocCompletionContext(p);
     return FLT_POSTOP_FINISHED_PROCESSING;

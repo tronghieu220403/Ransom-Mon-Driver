@@ -25,9 +25,4 @@ using namespace std;
 
 bool VerifyEmbeddedSignature(LPCWSTR pwszSourceFile);
 
-struct COMPORT_MESSAGE
-{
-    FILTER_MESSAGE_HEADER header;
-    WCHAR data[BUFFER_SIZE];
-};
 

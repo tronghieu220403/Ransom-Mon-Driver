@@ -18,9 +18,15 @@
     <ClCompile Include="user-cmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="named-pipe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="named-pipe.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

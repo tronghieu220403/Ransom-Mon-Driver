@@ -1,4 +1,4 @@
-// NamedPipe.cpp
+﻿// NamedPipe.cpp
 #include "named-pipe.h"
 
 NamedPipe::NamedPipe(const std::string& pipeName, bool isServer)
@@ -12,6 +12,20 @@ NamedPipe::~NamedPipe() {
 
 bool NamedPipe::connect() {
     if (isServer) {
+        SECURITY_ATTRIBUTES sa;
+        sa.nLength = sizeof(sa);
+        sa.bInheritHandle = FALSE;
+
+        // Chuỗi mô tả bảo mật cho phép mọi người truy cập (cả admin và user)
+        LPCWSTR securityDescriptorString = L"D:(A;OICI;GA;;;BA)(A;OICI;GA;;;BU)";
+
+        // Chuyển đổi chuỗi mô tả bảo mật thành cấu trúc SECURITY_DESCRIPTOR
+        if (!ConvertStringSecurityDescriptorToSecurityDescriptor(
+            securityDescriptorString, SDDL_REVISION_1, &sa.lpSecurityDescriptor, NULL)) {
+            std::cerr << "Failed to create security descriptor." << std::endl;
+            return false;
+        }
+
         hPipe = CreateNamedPipeA(
             pipeName.c_str(),
             PIPE_ACCESS_DUPLEX,
@@ -20,7 +34,7 @@ bool NamedPipe::connect() {
             4096,
             4096,
             0,
-            NULL
+            &sa
         );
 
         if (hPipe == INVALID_HANDLE_VALUE) {
@@ -52,12 +66,11 @@ bool NamedPipe::connect() {
                 break;
 
             if (GetLastError() != ERROR_PIPE_BUSY) {
-                std::cerr << "Could not open pipe. Error: " << GetLastError() << std::endl;
+                cout << GetLastError() << endl;
                 return false;
             }
 
-            if (!WaitNamedPipeA(pipeName.c_str(), 20000)) {
-                std::cerr << "Could not open pipe: 20 second wait timed out." << std::endl;
+            if (!WaitNamedPipeA(pipeName.c_str(), 1000)) {
                 return false;
             }
         }

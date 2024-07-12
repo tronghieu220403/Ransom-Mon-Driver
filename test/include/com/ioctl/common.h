@@ -39,3 +39,13 @@ struct IOCTL_CMD
 	size_t data_len;
 	char data[1];
 };
+
+struct Report
+{
+	bool detected = 0;
+	unsigned long long total_write = 0;
+
+	int honey_detected = false;
+	int entropy_detected = false;
+	int proc_mem_detected = false;
+};

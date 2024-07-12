@@ -158,8 +158,12 @@ public:
 	// Check if the string is a prefix of another string
 	bool IsPrefixOf(const String<T>&);
 
+	bool HasPrefix(const String<T>&);
+	
 	// Check if the string is a suffix of another string
 	bool IsSuffixOf(const String<T>&);
+
+	bool HasSuffix(const String<T>&);
 
 	size_t Find(const String<T>&);
 
@@ -628,6 +632,30 @@ inline bool String<T>::IsPrefixOf(const String<T>& str)
 }
 
 template<class T>
+inline bool String<T>::HasPrefix(const String<T>& str)
+{
+	if (size_ < str.size_)
+	{
+		return false;
+	}
+
+	if (elements_ == NULL || str.elements_ == NULL)
+	{
+		return false;
+	}
+
+	for (size_t i = 0; i < str.size_; ++i)
+	{
+		if (elements_[i] != str.elements_[i])
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+template<class T>
 inline bool String<T>::IsSuffixOf(const String<T>& str)
 {
 	if (size_ > str.size_)
@@ -643,6 +671,30 @@ inline bool String<T>::IsSuffixOf(const String<T>& str)
 	for (size_t i = 0; i < size_; ++i)
 	{
 		if (elements_[i] != str.elements_[str.size_ - size_ + i])
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+template<class T>
+inline bool String<T>::HasSuffix(const String<T>& str)
+{
+	if (size_ < str.size_)
+	{
+		return false;
+	}
+
+	if (elements_ == NULL || str.elements_ == NULL)
+	{
+		return false;
+	}
+
+	for (size_t i = 0; i < str.size_; ++i)
+	{
+		if (elements_[i] != str.elements_[size_ - str.size_ + i])
 		{
 			return false;
 		}

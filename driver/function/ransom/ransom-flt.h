@@ -22,7 +22,7 @@ namespace ransom
 	void DrvUnload();
 
 	void AddData(int pid, Vector<unsigned char> data);
-	void IncPidHoneyCnt(int pid);
+	void IncPidHoneyCnt(int pid, const String<WCHAR>& str);
 	bool IsPidRansomware(int pid);
 
 	void KillRansomPids(int pid);

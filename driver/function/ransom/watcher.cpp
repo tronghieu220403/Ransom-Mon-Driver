@@ -75,6 +75,10 @@ namespace ransom {
 
     void EntropyAnalyzer::AddData(const Vector<unsigned char>& new_data) {
 
+        if (is_random = true)
+        {
+            return;
+        }
         if (size_ == 0)
         {
             first_byte_ = new_data[0];
@@ -94,6 +98,10 @@ namespace ransom {
         {
             return false;
         }
+        if (is_random == true)
+        {
+            return true;
+        }
 
         long long chi_square_value = ChiSquareTest();
         long long correlation = SerialByteCorrelationCoefficient();
@@ -111,7 +119,12 @@ namespace ransom {
         }
         else
         {
-            return is_chi_square_random;
+            if (is_chi_square_random == true)
+            {
+                is_random = true;
+                Clean();
+            }
+            return is_random;
         }
     }
 
@@ -134,14 +147,26 @@ namespace ransom {
         first_byte_ = 0;
     }
 
-    void HoneyAnalyzer::IncHoneyCnt()
+    void HoneyAnalyzer::IncHoneyCnt(const String<WCHAR>& str)
     {
-        honey_cnt++;
+        unsigned long long hash = HashWstring(str);
+        bool exist = false;
+        for (int i = 0; i < file_list.Size(); i++)
+        {
+            if (file_list[i] == hash)
+            {
+                exist = true;
+            }
+        }
+        if (exist == false)
+        {
+            file_list.PushBack(hash);
+        }
     }
 
     bool HoneyAnalyzer::IsThresholdReached()
     {
-        return honey_cnt >= HONEY_CNT_THRESHOLD;
+        return file_list.Size() >= HONEY_CNT_THRESHOLD;
     }
 
 }

@@ -180,3 +180,8 @@ void moveFile(const fs::path& sourcePath, const fs::path& destinationDir) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 }
+
+std::string getFileNameWithoutExtension(const std::string& filePath) {
+    fs::path path(filePath);
+    return path.stem().string();
+}

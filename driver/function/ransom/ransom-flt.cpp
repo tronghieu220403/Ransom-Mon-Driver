@@ -5,9 +5,8 @@ namespace ransom
 
 	void FltRegister()
 	{
-		proc_mon::DrvRegister();
-		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, (PFLT_PRE_OPERATION_CALLBACK)PreWriteOperation, nullptr });
-		reg::kFltFuncVector->PushBack({ IRP_MJ_SET_INFORMATION, (PFLT_PRE_OPERATION_CALLBACK)PreWriteOperation, nullptr });
+		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, (PFLT_PRE_OPERATION_CALLBACK)PreWriteOperation, (PFLT_POST_OPERATION_CALLBACK)PostWriteOperation });
+		reg::kFltFuncVector->PushBack({ IRP_MJ_SET_INFORMATION, (PFLT_PRE_OPERATION_CALLBACK)PreSetInfoOperation, (PFLT_POST_OPERATION_CALLBACK)PostSetInfoOperation });
 
 		// TODO: monitor delete/change operation and write to honey_ pot.
 		return;
@@ -15,15 +14,17 @@ namespace ransom
 
 	void FltUnload()
 	{
-		proc_mon::DrvUnload();
+		
 	}
 
 	void DrvRegister()
 	{
+		proc_mon::DrvRegister();
 	}
 
 	void DrvUnload()
 	{
+		proc_mon::DrvUnload();
 	}
 
 	void AddData(int pid, Vector<unsigned char> data)
@@ -31,9 +32,9 @@ namespace ransom
 		proc_mon::p_manager->AddData(pid, &data);
 	}
 
-	void IncPidHoneyCnt(int pid)
+	void IncPidHoneyCnt(int pid, const String<WCHAR>& str)
 	{
-		proc_mon::p_manager->IncHoneyCnt(pid);
+		proc_mon::p_manager->IncHoneyCnt(pid, str);
 	}
 
 	bool IsPidRansomware(int pid)
@@ -43,14 +44,13 @@ namespace ransom
 
 	void KillRansomPids(int pid)
 	{
-		if (proc_mon::p_manager->KillProcess(pid) == false)
+		if (proc_mon::p_manager->KillProcessFamily(pid) == false)
 		{
-			DebugMessage("Failed to kill ransomware process pid: %d", pid);
+			DebugMessage("Failed to kill ransomware family");
 		}
 		else
 		{
-			proc_mon::p_manager->DeleteProcess(pid);
-			DebugMessage("Killed: %d", pid);
+			DebugMessage("Killed the entire family.");
 		}
 	}
 
@@ -71,11 +71,12 @@ namespace ransom
 		unsigned char* buffer = nullptr;
 
 		String<WCHAR> file_name = flt::GetFileFullPathName(data);
+
 		if (file_name.Size() != 0)
 		{
 			if (file_name.Find(HONEY_NAME) != static_cast<size_t>(-1))
 			{
-				IncPidHoneyCnt(pid);
+				IncPidHoneyCnt(pid, file_name);
 				goto check_ransom;
 			}
 		}
@@ -112,10 +113,13 @@ namespace ransom
 		check_ransom:
 		if (IsPidRansomware(pid) == true)
 		{
-			DebugMessage("Ransomware pid detected: %d", pid);
+			DebugMessage("Entropy: Ransomware pid detected: %d", pid);
 			KillRansomPids(pid);
 		}
 		
+		data->Iopb->Parameters.Write.Length = 0;
+		data->Iopb->Parameters.Write.ByteOffset.QuadPart = 0;
+		FltSetCallbackDataDirty(data);
 		return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 	}
 
@@ -138,6 +142,13 @@ namespace ransom
 		}
 
 		String<WCHAR> file_name = flt::GetFileFullPathName(data);
+		if (file_name.Find(L"User\\hieu\\Downloads") == static_cast<size_t>(-1))
+		{
+			data->IoStatus.Status = STATUS_ACCESS_DENIED;
+			data->IoStatus.Information = 0;
+
+			return FLT_PREOP_COMPLETE;
+		}
 
 		if (data->Iopb->MajorFunction == IRP_MJ_SET_INFORMATION) {
 			switch (data->Iopb->Parameters.SetFileInformation.FileInformationClass) {
@@ -152,10 +163,10 @@ namespace ransom
 				{
 					if (file_name.Find(HONEY_NAME) != static_cast<size_t>(-1))
 					{
-						IncPidHoneyCnt(pid);
+						IncPidHoneyCnt(pid, file_name);
 						if (IsPidRansomware(pid) == true)
 						{
-							DebugMessage("Ransomware pid detected: %d", pid);
+							DebugMessage("Honey - Ransomware pid detected: %d", pid);
 							KillRansomPids(pid);
 						}
 					}

@@ -52,6 +52,9 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 
 	IOCTL_CMD* cmd = (IOCTL_CMD*)irp->AssociatedIrp.SystemBuffer;
 
+	bool test_start_reply = false;
+	proc_mon::Report report;
+
 	if (stack_loc->Parameters.DeviceIoControl.IoControlCode != IOCTL_HIEU)
 	{
 		return STATUS_UNSUCCESSFUL;
@@ -127,11 +130,25 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 		str = cmd->ParseUnprotectDir().dir_path;
 		break;
 
-	case IOCTL_CMD_CLASS::kEnableRansom:
-		isEnabled = true;
+	case IOCTL_CMD_CLASS::kTestEnableRansom:
+		DebugMessage("Get kTestEnableRansom from service");
+		ransom::isEnabled = true;
+		proc_mon::p_manager->ResetReport();
+		test_start_reply = true;
+
+		irp->IoStatus.Information = sizeof(bool);
+		irp->IoStatus.Status = STATUS_SUCCESS;
+
+		RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &test_start_reply, sizeof(bool));
 		break;
-	case IOCTL_CMD_CLASS::kDisableRansom:
-		isEnabled = false;
+	case IOCTL_CMD_CLASS::kTestDisableRansom:
+		DebugMessage("Get kTestDisableRansom from service");
+		ransom::isEnabled = false;
+		proc_mon::p_manager->KillAll();
+		irp->IoStatus.Information = sizeof(proc_mon::Report);
+		irp->IoStatus.Status = STATUS_SUCCESS;
+		report = proc_mon::p_manager->GetReport();
+		RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &report, sizeof(proc_mon::Report));
 		break;
 	default:
 		break;

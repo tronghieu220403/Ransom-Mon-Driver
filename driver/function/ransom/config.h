@@ -1,3 +1,7 @@
 #pragma once
 
-extern inline bool isEnabled = true;
+namespace ransom
+{
+	extern inline bool isEnabled = true;
+}
+

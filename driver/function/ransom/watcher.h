@@ -3,6 +3,7 @@
 #include "../../std/vector/vector.h"
 #include "../../std/string/string.h"
 #include "../../std/sync/mutex.h"
+#include "../../std/algo/hash.h"
 
 #include <wdm.h>
 #include <fltKernel.h>
@@ -31,6 +32,8 @@ namespace ransom
         unsigned char last_byte_ = 0;
         unsigned char first_byte_ = 0;
 
+        bool is_random = false;
+
         long long ChiSquareTest();
         long long SerialByteCorrelationCoefficient();
         void UpdateChiSquareTest(const Vector<unsigned char>& data);
@@ -49,9 +52,9 @@ namespace ransom
     class HoneyAnalyzer
     {
     private:
-        int honey_cnt = 0;
+        Vector<unsigned long long> file_list;
     public:
-        void IncHoneyCnt();
+        void IncHoneyCnt(const String<WCHAR>& str);
         bool IsThresholdReached();
     };
 }

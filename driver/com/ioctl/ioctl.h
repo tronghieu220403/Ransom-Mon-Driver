@@ -5,10 +5,10 @@
 #include "../../std/vector/vector.h"
 #include "../../std/sync/mutex.h"
 
-#include "../../process/ps-monitor.h"
 #include "../../template/register.h"
 #include "../../template/flt-ex.h"
 #include "../../function/ransom/config.h"
+#include "../../function/ransom/proc-mon.h"
 #include "common.h"
 
 inline UNICODE_STRING DEVICE_NAME = RTL_CONSTANT_STRING(L"\\Device\\HieuDevice");

@@ -6,6 +6,12 @@
 #include "include/service/service.h"
 #include "include/file/file.h"
 
+struct COMPORT_MESSAGE
+{
+    FILTER_MESSAGE_HEADER header;
+    WCHAR data[BUFFER_SIZE];
+};
+
 void VerifySignature()
 {
     HANDLE hPort;
@@ -26,6 +32,7 @@ void VerifySignature()
             hr = FilterGetMessage(hPort, (PFILTER_MESSAGE_HEADER)&buffer, sizeof(COMPORT_MESSAGE), NULL);
             if (SUCCEEDED(hr))
             {
+                
                 bool is_valid = VerifyEmbeddedSignature(buffer.data);
                 reply.header = buffer.header;
                 reply.data[0] = is_valid;
@@ -74,11 +81,11 @@ int main()
 
     rm::RansomwareMonitoringService::SetMainWorkerFunction(ServiceMainWorker);
     rm::Service sc;
-    sc.SetName(L"aaaRanMon");
+    sc.SetName(L"RanMon");
     sc.SetServiceMainFunc((LPSERVICE_MAIN_FUNCTION)rm::RansomwareMonitoringService::RansomwareMonitoringServiceMain);
     sc.Start();
 
-    ServiceMainWorker();
+    //ServiceMainWorker();
     return 0;
 }
 

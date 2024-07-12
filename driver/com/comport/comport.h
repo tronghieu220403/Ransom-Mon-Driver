@@ -12,13 +12,13 @@ namespace com
 	private:
 		inline static PFLT_FILTER p_filter_handle_ = { 0 };
 		inline static PSECURITY_DESCRIPTOR sec_des_ = { 0 };
-		inline static PFLT_PORT server_port_ = { 0 };
+		inline static PFLT_PORT server_port_ = nullptr;
 		inline static OBJECT_ATTRIBUTES obj_attr_ = { 0 };
-		inline static PFLT_PORT client_port_ = { 0 };
+		inline static PFLT_PORT client_port_ = nullptr;
 
 	public:
 		static NTSTATUS Create();
-		NTSTATUS Send(PVOID sender_buffer, ULONG sender_buffer_length, void* reply_buffer, ULONG reply_buffer_length);
+		NTSTATUS Send(PVOID sender_buffer, ULONG sender_buffer_length, PVOID reply_buffer, ULONG reply_buffer_length);
 		static NTSTATUS Close();
 
 		static NTSTATUS ConnectHandler(

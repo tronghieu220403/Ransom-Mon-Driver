@@ -9,10 +9,35 @@
 #include "include/registry/registry.h"
 #include "include/com/ipc/named-pipe.h"
 
+void writeReportToFile(const std::string& file_path, const Report& report) {
+    
+    string path = "C:/MarauderMap/Report/" + getFileNameWithoutExtension(file_path) + ".txt";
+
+    std::ofstream outFile(path);
+
+    if (!outFile) {
+        std::cerr << "Failed to open file for writing: " << path << std::endl;
+        return;
+    }
+    outFile << "File name: " << getFileNameWithoutExtension(file_path) << ".exe" << endl;
+    outFile << "Detected: " << (report.detected ? "true" : "false") << std::endl;
+    outFile << "Total write (bytes): " << report.total_write << std::endl;
+    outFile << "Honey detected: " << (report.honey_detected ? "true" : "false") << std::endl;
+    outFile << "Entropy detected: " << (report.entropy_detected ? "true" : "false") << std::endl;
+    outFile << "Proc mem detected: " << (report.proc_mem_detected ? "true" : "false") << std::endl;
+
+    outFile.close();
+
+    if (!outFile) {
+        std::cerr << "Failed to close file properly: " << file_path << std::endl;
+    }
+}
+
+
 LPVOID ServiceMainWorker()
 {
-    ExportRegistryKey(KEY_PATH, EXPORT_PATH);
-    NamedPipe pipe("\\\\.\\pipe\\MyPipe", false);
+    //ExportRegistryKey(KEY_PATH, EXPORT_PATH);
+    NamedPipe pipe("\\\\.\\pipe\\MyPipe", true);
     pipe.connect();
     Ioctl ioctl;
     ioctl.Create();
@@ -21,8 +46,13 @@ LPVOID ServiceMainWorker()
         // Send signal to kernel to start monitor
         vector<unsigned char> reply = ioctl.StartMonitor();
         // Get response from kernel to see if kernel has started
-        IOCTL_CMD* cmd = (IOCTL_CMD*)&reply[0];
-        if (cmd->cmd_class != kTestEnableRansom || cmd->data_len != sizeof(bool) || *((bool*)(&cmd->data[0])) != true)
+        if (reply.size() == 0)
+        {
+            Sleep(100);
+            continue;
+        }
+        bool run_ok = (bool*)&reply[0];
+        if (run_ok != true)
         {
             Sleep(100);
             continue;
@@ -57,26 +87,27 @@ LPVOID ServiceMainWorker()
         // Send signal to kernel to stop mornitor
         reply = ioctl.StopMonitor();
 
-        // Get response from kernel to see if kernel monitor has stop and killed all ransomware
-        if (cmd->cmd_class != kTestDisableRansom || *((bool*)(&cmd->data[0])) != true)
+        if (reply.size() == 0)
         {
             Sleep(100);
             continue;
         }
+
+        Report* report = (Report*)&reply[0];
         
         // Log ransomware: name, success
-
-        // Do something with the reply contain data about ransom
-
+        writeReportToFile(file_name, *report);
 
         // Restore registry
-        ImportRegistryKey(EXPORT_PATH);
+        //ImportRegistryKey(EXPORT_PATH);
 
         // Move that file out of list of ransomware to runned ransomware
         moveFile(file_name, "C:/MarauderMap/Volumes/Tested/");
 
         // Restore file system
         //copyDirectory("C:/Users/hieu-copy", "C:/Users/hieu");
+        std::cout << endl;
+
     }
 
     ioctl.Close();

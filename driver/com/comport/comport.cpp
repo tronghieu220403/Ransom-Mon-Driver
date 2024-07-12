@@ -33,6 +33,10 @@ namespace com
 
 	NTSTATUS ComPort::Send(PVOID sender_buffer, ULONG sender_buffer_length, PVOID reply_buffer, ULONG reply_buffer_length)
 	{
+		if (client_port_ == nullptr)
+		{
+			return STATUS_CONNECTION_INVALID;
+		}
 		LARGE_INTEGER timeout;
 		timeout.QuadPart = -50000000; // 5s
 		NTSTATUS status = FltSendMessage(p_filter_handle_,
@@ -64,7 +68,7 @@ namespace com
 		if (server_port_ != NULL)
 		{
 			FltCloseCommunicationPort(server_port_);
-			server_port_ = NULL;
+			server_port_ = nullptr;
 		}
 		return STATUS_SUCCESS;
 	}
@@ -90,6 +94,8 @@ namespace com
 		FltCloseClientPort(p_filter_handle_, &client_port_);
 
 		// DebugMessage("Disonnected");
+
+		client_port_ = nullptr;
 
 		return;
 	}
