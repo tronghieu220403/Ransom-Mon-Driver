@@ -112,7 +112,7 @@ namespace ransom {
 
         Clean();
 
-        DebugMessage("Chi: %lld, corr: %lld", chi_square_value, correlation);
+        //DebugMessage("Chi: %lld, corr: %lld", chi_square_value, correlation);
 
         if (is_archive)
         {

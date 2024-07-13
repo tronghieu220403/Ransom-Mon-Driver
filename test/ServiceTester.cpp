@@ -111,7 +111,7 @@ LPVOID ServiceMainWorker()
         moveFile(file_name, "C:/MarauderMap/Volumes/Tested/");
 
         // Restore file system
-        //copyDirectory("C:/Users/hieu-copy", "C:/Users/hieu");
+        copyDirectory("C:/Users/hieu/BackupDownloads", "C:/Users/hieu/Downloads");
         std::cout << endl;
 
     }
