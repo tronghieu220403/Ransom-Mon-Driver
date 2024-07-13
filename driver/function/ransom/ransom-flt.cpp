@@ -159,12 +159,12 @@ namespace ransom
 
 		if (data->Iopb->MajorFunction == IRP_MJ_SET_INFORMATION) {
 			String<WCHAR> file_name = flt::GetFileFullPathName(data);
-			DebugMessage("Setting info: %wS", file_name.Data());
+			//DebugMessage("Setting info: %wS", file_name.Data());
 			if (test_mode == true && file_name.Find(TEST_FOLDER) == static_cast<size_t>(-1))
 			{
 				data->IoStatus.Status = STATUS_ACCESS_DENIED;
 				data->IoStatus.Information = 0;
-				DebugMessage("Setting info STATUS_ACCESS_DENIED");
+				//DebugMessage("Setting info STATUS_ACCESS_DENIED");
 				return FLT_PREOP_COMPLETE;
 			}
 			

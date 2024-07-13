@@ -33,9 +33,30 @@ void writeReportToFile(const std::string& file_path, const Report& report) {
     }
 }
 
+void deleteAllFilesInDirectory(const fs::path& directoryPath) {
+    try {
+        if (!fs::exists(directoryPath) || !fs::is_directory(directoryPath)) {
+            std::cerr << "The specified path does not exist or is not a directory." << std::endl;
+            return;
+        }
+
+        for (const auto& entry : fs::directory_iterator(directoryPath)) {
+            if (fs::is_regular_file(entry)) {
+                fs::remove(entry);
+            }
+        }
+    }
+    catch (const fs::filesystem_error& e) {
+        //std::cerr << "Filesystem error: " << e.what() << std::endl;
+    }
+    catch (const std::exception& e) {
+        //std::cerr << "General error: " << e.what() << std::endl;
+    }
+}
 
 LPVOID ServiceMainWorker()
 {
+    unsigned long long total_write = 0;
     //ExportRegistryKey(KEY_PATH, EXPORT_PATH);
     NamedPipe pipe("\\\\.\\pipe\\MyPipe", true);
     pipe.connect();
@@ -44,7 +65,7 @@ LPVOID ServiceMainWorker()
     while (true)
     {
         // Select a file from list of ransomware
-        string file_name = getRandomFile("C:/MarauderMap/Volumes/T7Shield1T/230701-Win32-EXE-all-7802");
+        string file_name = getRandomFile("C:/MarauderMap/Volumes/T7Shield1T/230724-samples-108");
         if (file_name.size() == 0)
         {
             Sleep(300);
@@ -110,8 +131,20 @@ LPVOID ServiceMainWorker()
         // Move that file out of list of ransomware to runned ransomware
         moveFile(file_name, "C:/MarauderMap/Volumes/Tested/");
 
+        deleteAllFilesInDirectory("C:\\Users\\hieu\\Downloads");
         // Restore file system
-        copyDirectory("C:/Users/hieu/BackupDownloads", "C:/Users/hieu/Downloads");
+        total_write += report->total_write;
+        if (total_write >= 100'000'000)
+        {
+            try {
+                copyDirectory("C:/Users/hieu/BackupDownloads", "C:/Users/hieu/Downloads");
+                total_write = 0;
+            }
+            catch (const std::exception& e)
+            {
+
+            }
+        }
         std::cout << endl;
 
     }

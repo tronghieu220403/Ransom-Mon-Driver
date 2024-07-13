@@ -403,7 +403,11 @@ namespace proc_mon
 		}
 		else // Process termination
 		{
-			p_manager->DeleteProcess(pid);
+			if (p_manager->Exist(pid))
+			{
+				DebugMessage("Process %d terminated", pid);
+				p_manager->DeleteProcess(pid);
+			}
 		}
 	}
 
