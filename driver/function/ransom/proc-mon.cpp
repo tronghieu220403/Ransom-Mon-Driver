@@ -6,7 +6,7 @@ namespace proc_mon
 	{
 		p_manager = new ProcessManager();
 		NTSTATUS status;
-		
+
 		status = PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)&proc_mon::ProcessNotifyCallBackEx, FALSE);
 		if (STATUS_SUCCESS != status)
 		{
@@ -31,7 +31,7 @@ namespace proc_mon
 		DbgPrintEx(DPFLTR_ACPI_ID, 0, "[+] ObRegisterCallbacks Test\n");
 
 		status = ObRegisterCallbacks(&obRegistration, &hRegistration);
-		if(STATUS_SUCCESS != status)
+		if (STATUS_SUCCESS != status)
 		{
 			DebugMessage("Fail to register ObRegisterCallbacks: %x", status);
 		}
@@ -85,7 +85,7 @@ namespace proc_mon
 		}
 
 		mtx_.Unlock();
-		
+
 		return;
 	}
 
@@ -191,7 +191,7 @@ namespace proc_mon
 	void ProcessManager::AddData(int pid, const Vector<unsigned char>* data)
 	{
 		mtx_.Lock();
-		if (pid < processes_.Size() && processes_[pid]->proc_mtx_ != nullptr)
+		if (pid < processes_.Size() && processes_[pid] != nullptr && processes_[pid]->proc_mtx_ != nullptr)
 		{
 			test_total_write_ += data->Size();
 			processes_[pid]->proc_mtx_->Lock();
@@ -270,7 +270,7 @@ namespace proc_mon
 			report_.proc_mem_detected = true;
 		}
 		processes_[pid]->proc_mtx_->Unlock();
-		
+
 		if (ans == true)
 		{
 			report_.detected = true;
@@ -365,7 +365,7 @@ namespace proc_mon
 			return;
 		}
 		if (create_info) // Process creation
-		{	
+		{
 			if (create_info->ImageFileName == nullptr || create_info->IsSubsystemProcess == TRUE || create_info->FileOpenNameAvailable == FALSE)
 			{
 				return;
@@ -379,7 +379,7 @@ namespace proc_mon
 			{
 				process_image_name = &process_image_name[String<WCHAR>(L"\\??\\").Size()];
 			}
-			
+
 			bool is_valid = true;
 			if (p_manager->Exist((int)create_info->ParentProcessId))
 			{
@@ -427,7 +427,7 @@ namespace proc_mon
 		}
 
 		long long cur_pid = (long long)PsGetCurrentProcessId();
-		long long target_pid = (long long)PsGetProcessId((PEPROCESS	)pOperationInformation->Object);
+		long long target_pid = (long long)PsGetProcessId((PEPROCESS)pOperationInformation->Object);
 
 		if (cur_pid == target_pid)
 		{
@@ -438,11 +438,11 @@ namespace proc_mon
 		{
 			return OB_PREOP_SUCCESS;
 		}
-		
+
 		if ((pOperationInformation->Operation == OB_OPERATION_HANDLE_CREATE))
 		{
 			if (
-				FlagOn(pOperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess, PROCESS_VM_OPERATION) || 
+				FlagOn(pOperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess, PROCESS_VM_OPERATION) ||
 				FlagOn(pOperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess, PROCESS_VM_WRITE))
 			{
 				ClearFlag(pOperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess, PROCESS_VM_WRITE);
