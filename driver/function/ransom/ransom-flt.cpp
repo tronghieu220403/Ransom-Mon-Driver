@@ -73,12 +73,17 @@ namespace ransom
 
 		String<WCHAR> file_name = flt::GetFileFullPathName(data);
 
-		if (test_mode == true && file_name.Find(TEST_FOLDER) == static_cast<size_t>(-1))
+		if (test_mode == true)
 		{
-			data->IoStatus.Status = STATUS_ACCESS_DENIED;
-			data->IoStatus.Information = 0;
-
-			return FLT_PREOP_COMPLETE;
+			for (int i = 0; i < WHILE_LIST_SIZE; i++)
+			{
+				if (file_name.Find(white_list[i]) != static_cast<size_t>(-1))
+				{
+					data->IoStatus.Status = STATUS_ACCESS_DENIED;
+					data->IoStatus.Information = 0;
+					return FLT_PREOP_COMPLETE;
+				}
+			}
 		}
 
 		Vector<unsigned char> write_data;
@@ -157,16 +162,19 @@ namespace ransom
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 		}
 
-
 		if (data->Iopb->MajorFunction == IRP_MJ_SET_INFORMATION) {
 			String<WCHAR> file_name = flt::GetFileFullPathName(data);
-			//DebugMessage("Setting info: %wS", file_name.Data());
-			if (test_mode == true && file_name.Find(TEST_FOLDER) == static_cast<size_t>(-1))
+			if (test_mode == true)
 			{
-				data->IoStatus.Status = STATUS_ACCESS_DENIED;
-				data->IoStatus.Information = 0;
-				//DebugMessage("Setting info STATUS_ACCESS_DENIED");
-				return FLT_PREOP_COMPLETE;
+				for (int i = 0; i < WHILE_LIST_SIZE; i++)
+				{
+					if (file_name.Find(white_list[i]) != static_cast<size_t>(-1))
+					{
+						data->IoStatus.Status = STATUS_ACCESS_DENIED;
+						data->IoStatus.Information = 0;
+						return FLT_PREOP_COMPLETE;
+					}
+				}
 			}
 
 			if (data->Iopb->Parameters.SetFileInformation.FileInformationClass == FileAllocationInformation)
@@ -231,26 +239,20 @@ namespace ransom
 		}
 
 		String<WCHAR> file_name = flt::GetFileFullPathName(data);
-		//DebugMessage("Creating: %wS", file_name.Data());
 
-		if (test_mode == true && file_name.Find(TEST_FOLDER) == static_cast<size_t>(-1))
+		if (test_mode == true)
 		{
-			bool is_new_file = false;
-			// Get create disposition
-			unsigned long long create_disposition = (data->Iopb->Parameters.Create.Options >> 24) & 0x000000FF;
+			for (int i = 0; i < WHILE_LIST_SIZE; i++)
+			{
+				if (file_name.Find(white_list[i]) != static_cast<size_t>(-1))
+				{
+					data->IoStatus.Status = STATUS_ACCESS_DENIED;
+					data->IoStatus.Information = 0;
+					return FLT_PREOP_COMPLETE;
+				}
+			}
 
-			is_new_file = ((FILE_SUPERSEDE == create_disposition)
-				|| (FILE_CREATE == create_disposition)
-				|| (FILE_OPEN_IF == create_disposition)
-				|| (FILE_OVERWRITE == create_disposition)
-				|| (FILE_OVERWRITE_IF == create_disposition));
-
-			data->IoStatus.Status = STATUS_ACCESS_DENIED;
-			data->IoStatus.Information = 0;
-			//DebugMessage("Create STATUS_ACCESS_DENIED");
-			return FLT_PREOP_COMPLETE;
 		}
-		//DebugMessage("Created");
 		return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 	}
 

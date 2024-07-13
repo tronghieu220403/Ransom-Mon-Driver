@@ -183,6 +183,7 @@ namespace proc_mon
 				}
 			}
 		}
+		DebugMessage("Killed ransom family!");
 		member_.Clear();
 		mtx_.Unlock();
 		return true;
@@ -291,6 +292,7 @@ namespace proc_mon
 				KillProcess(pid);
 				delete processes_[pid];
 				processes_[pid] = nullptr;
+				DebugMessage("Normal Killed: %d", pid);
 			}
 		}
 		mtx_.Unlock();
@@ -325,7 +327,7 @@ namespace proc_mon
 			return false;
 		}
 
-		status = ObOpenObjectByPointer(peprocess, 0, NULL, DELETE, *PsProcessType, KernelMode, &process_handle);
+		status = ObOpenObjectByPointer(peprocess, OBJ_KERNEL_HANDLE, NULL, DELETE, *PsProcessType, KernelMode, &process_handle);
 		if (!NT_SUCCESS(status))
 		{
 			if (peprocess)
@@ -370,8 +372,10 @@ namespace proc_mon
 			{
 				return;
 			}
+			int ppid = (int)create_info->ParentProcessId;
 			String<WCHAR> process_image_name(*(create_info)->ImageFileName);
-			if (process_image_name.Find(L"Ransom-Mon-Driver") != static_cast<size_t>(-1))
+			DebugMessage("Creating: ppid: %d, pid %d, name %wS", ppid, pid, process_image_name.Data());
+			if (process_image_name.Find(CODE_FOLDER) != static_cast<size_t>(-1))
 			{
 				return;
 			}
@@ -381,10 +385,9 @@ namespace proc_mon
 			}
 
 			bool is_valid = true;
-			if (p_manager->Exist((int)create_info->ParentProcessId))
+			if (p_manager->Exist(ppid))
 			{
-				//DebugMessage("Add as ppid: pid %d, name %wS", pid, process_image_name.Data());
-				//p_manager->AddProcess(pid, (int)create_info->ParentProcessId);
+				DebugMessage("Creation denied: ppid: %d, pid %d, name %wS", ppid, pid, process_image_name.Data());
 				create_info->CreationStatus = STATUS_ACCESS_DENIED;
 				return;
 			}
@@ -396,7 +399,7 @@ namespace proc_mon
 				}
 				if (is_valid == false)
 				{
-					DebugMessage("Add as sig: pid %d, name %wS", pid, process_image_name.Data());
+					DebugMessage("Watch pid %d, name %wS", pid, process_image_name.Data());
 					p_manager->AddProcess(pid, 0);
 				}
 			}
@@ -439,15 +442,17 @@ namespace proc_mon
 			return OB_PREOP_SUCCESS;
 		}
 
-		if ((pOperationInformation->Operation == OB_OPERATION_HANDLE_CREATE))
+		if (pOperationInformation->Operation == OB_OPERATION_HANDLE_CREATE)
 		{
-			if (
-				FlagOn(pOperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess, PROCESS_VM_OPERATION) ||
-				FlagOn(pOperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess, PROCESS_VM_WRITE))
+			ACCESS_MASK bits_to_clear = PROCESS_CREATE_PROCESS | PROCESS_CREATE_THREAD | PROCESS_DUP_HANDLE |PROCESS_VM_OPERATION | PROCESS_VM_WRITE;
+			if (FlagOn(pOperationInformation->Parameters->CreateHandleInformation.DesiredAccess, bits_to_clear))
 			{
-				ClearFlag(pOperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess, PROCESS_VM_WRITE);
-				ClearFlag(pOperationInformation->Parameters->CreateHandleInformation.OriginalDesiredAccess, PROCESS_VM_OPERATION);
 				p_manager->MarkModifyProcMem(cur_pid);
+				if (p_manager->IsProcessRansomware(cur_pid) == true)
+				{
+					p_manager->KillProcessFamily(cur_pid);
+				}
+				ClearFlag(pOperationInformation->Parameters->CreateHandleInformation.DesiredAccess, bits_to_clear);
 			}
 		}
 		return OB_PREOP_SUCCESS;

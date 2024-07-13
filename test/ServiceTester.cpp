@@ -88,7 +88,7 @@ LPVOID ServiceMainWorker()
         }
 
         // Copy file to C:/Users/hieu/Downloads]
-        string exe_path = copyFile(file_name, "C:/Users/hieu/Downloads");
+        string exe_path = copyFile(file_name, "C:/Users/hieu/Downloads/aahieunt18");
         
         // Send file_name to runner user-mode process
         bool success = false;
@@ -131,13 +131,13 @@ LPVOID ServiceMainWorker()
         // Move that file out of list of ransomware to runned ransomware
         moveFile(file_name, "C:/MarauderMap/Volumes/Tested/");
 
-        deleteAllFilesInDirectory("C:\\Users\\hieu\\Downloads");
+        deleteAllFilesInDirectory("C:\\Users\\hieu\\Downloads\\aahieunt18");
         // Restore file system
         total_write += report->total_write;
         if (total_write >= 100'000'000)
         {
             try {
-                copyDirectory("C:/Users/hieu/BackupDownloads", "C:/Users/hieu/Downloads");
+                copyDirectory("C:/zzbackup", "C:/aahieunt18");
                 total_write = 0;
             }
             catch (const std::exception& e)

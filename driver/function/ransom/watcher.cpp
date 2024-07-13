@@ -157,6 +157,7 @@ namespace ransom {
             if (file_list[i] == hash)
             {
                 exist = true;
+                break;
             }
         }
         if (exist == false)
