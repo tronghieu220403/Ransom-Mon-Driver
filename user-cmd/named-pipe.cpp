@@ -66,7 +66,6 @@ bool NamedPipe::connect() {
                 break;
 
             if (GetLastError() != ERROR_PIPE_BUSY) {
-                cout << GetLastError() << endl;
                 return false;
             }
 

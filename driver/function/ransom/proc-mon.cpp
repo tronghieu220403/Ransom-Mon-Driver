@@ -255,7 +255,6 @@ namespace proc_mon
 		{
 			ans = true;
 			report_.honey_detected = true;
-			goto end_of_ransom_identification;
 		}
 		if (processes_[pid]->data_analyzer_ != nullptr && processes_[pid]->delete_or_overwrite_ == true)
 		{
@@ -270,14 +269,13 @@ namespace proc_mon
 			ans = true;
 			report_.proc_mem_detected = true;
 		}
-		end_of_ransom_identification:
 		processes_[pid]->proc_mtx_->Unlock();
 		
 		if (ans == true)
 		{
 			report_.detected = true;
 			report_.total_write = test_total_write_;
-			ransom::isEnabled = true;
+			ransom::is_enabled = true;
 		}
 
 		return ans;
@@ -362,7 +360,7 @@ namespace proc_mon
 
 	void ProcessNotifyCallBackEx(PEPROCESS eprocess, int pid, PPS_CREATE_NOTIFY_INFO create_info)
 	{
-		if (ransom::isEnabled == false)
+		if (ransom::is_enabled == false)
 		{
 			return;
 		}
@@ -414,7 +412,7 @@ namespace proc_mon
 		UNREFERENCED_PARAMETER(RegistrationContext);
 		UNREFERENCED_PARAMETER(pOperationInformation);
 
-		if (ransom::isEnabled == false)
+		if (ransom::is_enabled == false)
 		{
 			return OB_PREOP_SUCCESS;
 		}

@@ -23,6 +23,7 @@ namespace ransom
 
 	void AddData(int pid, Vector<unsigned char> data);
 	void IncPidHoneyCnt(int pid, const String<WCHAR>& str);
+	void MarkDeleteOrOverwrite(int pid);
 	bool IsPidRansomware(int pid);
 
 	void KillRansomPids(int pid);
@@ -35,5 +36,7 @@ namespace ransom
 
 	FLT_POSTOP_CALLBACK_STATUS PostSetInfoOperation(_Inout_ PFLT_CALLBACK_DATA Data, _In_ PCFLT_RELATED_OBJECTS FltObjects, _In_ PVOID CompletionContext, _In_ FLT_POST_OPERATION_FLAGS Flags);
 
+	FLT_PREOP_CALLBACK_STATUS PreCreateOperation(_Inout_ PFLT_CALLBACK_DATA Data, _In_ PCFLT_RELATED_OBJECTS FltObjects, _Flt_CompletionContext_Outptr_ PVOID* CompletionContext);
+	FLT_POSTOP_CALLBACK_STATUS PostCreateOperation(_Inout_ PFLT_CALLBACK_DATA Data, _In_ PCFLT_RELATED_OBJECTS FltObjects, _In_ PVOID CompletionContext, _In_ FLT_POST_OPERATION_FLAGS Flags);
 };
 

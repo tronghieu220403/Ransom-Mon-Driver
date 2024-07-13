@@ -51,7 +51,6 @@ namespace ransom {
         {
             freq_[data[i]]++;
         }
-        size_ += sz;
     }
 
     void EntropyAnalyzer::UpdateSerialByteCorrelationCoefficient(const Vector<unsigned char>& data)
@@ -75,7 +74,7 @@ namespace ransom {
 
     void EntropyAnalyzer::AddData(const Vector<unsigned char>& new_data) {
 
-        if (is_random = true)
+        if (is_random == true)
         {
             return;
         }
@@ -83,6 +82,8 @@ namespace ransom {
         {
             first_byte_ = new_data[0];
         }
+
+        size_ += new_data.Size();
 
         UpdateChiSquareTest(new_data);
         UpdateSerialByteCorrelationCoefficient(new_data);
@@ -111,7 +112,7 @@ namespace ransom {
 
         Clean();
 
-        DebugMessage("%lld %lld", chi_square_value, correlation);
+        DebugMessage("Chi: %lld, corr: %lld", chi_square_value, correlation);
 
         if (is_archive)
         {

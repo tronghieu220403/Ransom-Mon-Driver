@@ -7,7 +7,7 @@ namespace ransom
 	{
 		reg::kFltFuncVector->PushBack({ IRP_MJ_WRITE, (PFLT_PRE_OPERATION_CALLBACK)PreWriteOperation, (PFLT_POST_OPERATION_CALLBACK)PostWriteOperation });
 		reg::kFltFuncVector->PushBack({ IRP_MJ_SET_INFORMATION, (PFLT_PRE_OPERATION_CALLBACK)PreSetInfoOperation, (PFLT_POST_OPERATION_CALLBACK)PostSetInfoOperation });
-
+		reg::kFltFuncVector->PushBack({ IRP_MJ_CREATE, (PFLT_PRE_OPERATION_CALLBACK)PreCreateOperation, (PFLT_POST_OPERATION_CALLBACK)PostCreateOperation });
 		// TODO: monitor delete/change operation and write to honey_ pot.
 		return;
 	}
@@ -37,6 +37,11 @@ namespace ransom
 		proc_mon::p_manager->IncHoneyCnt(pid, str);
 	}
 
+	void MarkDeleteOrOverwrite(int pid)
+	{
+		proc_mon::p_manager->MarkDeleteOrOverwrite(pid);
+	}
+
 	bool IsPidRansomware(int pid)
 	{
 		return proc_mon::p_manager->IsProcessRansomware(pid);
@@ -56,7 +61,7 @@ namespace ransom
 
 	FLT_PREOP_CALLBACK_STATUS PreWriteOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
 	{
-		if (isEnabled == false)
+		if (is_enabled == false)
 		{
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 		}
@@ -66,11 +71,19 @@ namespace ransom
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 		}
 		
+		String<WCHAR> file_name = flt::GetFileFullPathName(data);
+
+		if (test_mode == true && file_name.Find(TEST_FOLDER) == static_cast<size_t>(-1))
+		{
+			data->IoStatus.Status = STATUS_ACCESS_DENIED;
+			data->IoStatus.Information = 0;
+
+			return FLT_PREOP_COMPLETE;
+		}
+
 		Vector<unsigned char> write_data;
 		ULONG length = data->Iopb->Parameters.Write.Length;
 		unsigned char* buffer = nullptr;
-
-		String<WCHAR> file_name = flt::GetFileFullPathName(data);
 
 		if (file_name.Size() != 0)
 		{
@@ -107,19 +120,21 @@ namespace ransom
 
 			return FLT_PREOP_COMPLETE;
 		}
-
+		
+		MarkDeleteOrOverwrite(pid);
 		AddData(pid, write_data);
 
-		check_ransom:
+	check_ransom:
+
 		if (IsPidRansomware(pid) == true)
 		{
 			DebugMessage("Entropy: Ransomware pid detected: %d", pid);
 			KillRansomPids(pid);
 		}
 		
-		data->Iopb->Parameters.Write.Length = 0;
-		data->Iopb->Parameters.Write.ByteOffset.QuadPart = 0;
-		FltSetCallbackDataDirty(data);
+		//data->Iopb->Parameters.Write.Length = 0;
+		//data->Iopb->Parameters.Write.ByteOffset.QuadPart = 0;
+		//FltSetCallbackDataDirty(data);
 		return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 	}
 
@@ -131,7 +146,7 @@ namespace ransom
 
 	FLT_PREOP_CALLBACK_STATUS PreSetInfoOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
 	{
-		if (isEnabled == false)
+		if (is_enabled == false)
 		{
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 		}
@@ -141,24 +156,39 @@ namespace ransom
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 		}
 
-		String<WCHAR> file_name = flt::GetFileFullPathName(data);
-		if (file_name.Find(L"User\\hieu\\Downloads") == static_cast<size_t>(-1))
-		{
-			data->IoStatus.Status = STATUS_ACCESS_DENIED;
-			data->IoStatus.Information = 0;
-
-			return FLT_PREOP_COMPLETE;
-		}
 
 		if (data->Iopb->MajorFunction == IRP_MJ_SET_INFORMATION) {
+			String<WCHAR> file_name = flt::GetFileFullPathName(data);
+			DebugMessage("Setting info: %wS", file_name.Data());
+			if (test_mode == true && file_name.Find(TEST_FOLDER) == static_cast<size_t>(-1))
+			{
+				data->IoStatus.Status = STATUS_ACCESS_DENIED;
+				data->IoStatus.Information = 0;
+				DebugMessage("Setting info STATUS_ACCESS_DENIED");
+				return FLT_PREOP_COMPLETE;
+			}
+			
+			if (data->Iopb->Parameters.SetFileInformation.FileInformationClass == FileAllocationInformation)
+			{
+				if (((PFILE_ALLOCATION_INFORMATION)(data->Iopb->Parameters.SetFileInformation.InfoBuffer))->AllocationSize.QuadPart == 0)
+				{
+					MarkDeleteOrOverwrite(pid);
+				}
+			}
+			else
+			{
+				MarkDeleteOrOverwrite(pid);
+			}
+
 			switch (data->Iopb->Parameters.SetFileInformation.FileInformationClass) {
-			case FileAllocationInformation:
+			
 			case FileRenameInformation:
 			case FileRenameInformationEx:
 			case FileDispositionInformation:
 			case FileDispositionInformationEx:
 			case FileRenameInformationBypassAccessCheck:
 			case FileRenameInformationExBypassAccessCheck:
+			case FileAllocationInformation:
 				if (file_name.Size() != 0)
 				{
 					if (file_name.Find(HONEY_NAME) != static_cast<size_t>(-1))
@@ -187,7 +217,38 @@ namespace ransom
 		return FLT_POSTOP_FINISHED_PROCESSING;
 	}
 
+	FLT_PREOP_CALLBACK_STATUS PreCreateOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
+	{
+		/*
+		if (is_enabled == false)
+		{
+			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
+		}
+		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
+		if (proc_mon::p_manager->Exist(pid) == false)
+		{
+			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
+		}
 
+		String<WCHAR> file_name = flt::GetFileFullPathName(data);
+		DebugMessage("Creating: %wS", file_name.Data());
+
+		if (test_mode == true && file_name.Find(TEST_FOLDER) == static_cast<size_t>(-1))
+		{
+			data->IoStatus.Status = STATUS_ACCESS_DENIED;
+			data->IoStatus.Information = 0;
+			DebugMessage("Create STATUS_ACCESS_DENIED");
+			return FLT_PREOP_COMPLETE;
+		}
+		DebugMessage("Created");
+		*/
+		return FLT_PREOP_SUCCESS_WITH_CALLBACK;
+	}
+
+	FLT_POSTOP_CALLBACK_STATUS PostCreateOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _In_ PVOID completion_context, _In_ FLT_POST_OPERATION_FLAGS flags)
+	{
+		return FLT_POSTOP_FINISHED_PROCESSING;
+	}
 }
 
 

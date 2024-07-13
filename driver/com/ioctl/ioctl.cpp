@@ -132,7 +132,8 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 
 	case IOCTL_CMD_CLASS::kTestEnableRansom:
 		DebugMessage("Get kTestEnableRansom from service");
-		ransom::isEnabled = true;
+		ransom::is_enabled = true;
+		ransom::test_mode = true;
 		proc_mon::p_manager->ResetReport();
 		test_start_reply = true;
 
@@ -143,7 +144,8 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 		break;
 	case IOCTL_CMD_CLASS::kTestDisableRansom:
 		DebugMessage("Get kTestDisableRansom from service");
-		ransom::isEnabled = false;
+		ransom::is_enabled = false;
+		ransom::test_mode = false;
 		proc_mon::p_manager->KillAll();
 		irp->IoStatus.Information = sizeof(proc_mon::Report);
 		irp->IoStatus.Status = STATUS_SUCCESS;

@@ -43,6 +43,14 @@ LPVOID ServiceMainWorker()
     ioctl.Create();
     while (true)
     {
+        // Select a file from list of ransomware
+        string file_name = getRandomFile("C:/MarauderMap/Volumes/T7Shield1T/230701-Win32-EXE-all-7802");
+        if (file_name.size() == 0)
+        {
+            Sleep(300);
+            continue;
+        }
+
         // Send signal to kernel to start monitor
         vector<unsigned char> reply = ioctl.StartMonitor();
         // Get response from kernel to see if kernel has started
@@ -58,13 +66,7 @@ LPVOID ServiceMainWorker()
             continue;
         }
 
-        // Select a file from list of ransomware
-        string file_name = getRandomFile("C:/MarauderMap/Volumes/T7Shield1T/230701-Win32-EXE-all-7802");
-        if (file_name.size() == 0)
-        {
-            break;
-        }
-        // Copy it to C:/Users/hieu/Downloads]
+        // Copy file to C:/Users/hieu/Downloads]
         string exe_path = copyFile(file_name, "C:/Users/hieu/Downloads");
         
         // Send file_name to runner user-mode process
