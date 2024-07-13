@@ -14,7 +14,7 @@ namespace ransom
 
 	void FltUnload()
 	{
-		
+
 	}
 
 	void DrvRegister()
@@ -70,7 +70,7 @@ namespace ransom
 		{
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 		}
-		
+
 		String<WCHAR> file_name = flt::GetFileFullPathName(data);
 
 		if (test_mode == true && file_name.Find(TEST_FOLDER) == static_cast<size_t>(-1))
@@ -113,14 +113,15 @@ namespace ransom
 		write_data.Resize(length);
 		__try {
 			MemCopy(&write_data[0], buffer, length);
-		} __except(EXCEPTION_EXECUTE_HANDLER) {
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER) {
 			data->IoStatus.Status = GetExceptionCode();
 			data->IoStatus.Information = 0;
 			//DebugMessage("GetExceptionCode(): %llx", GetExceptionCode());
 
 			return FLT_PREOP_COMPLETE;
 		}
-		
+
 		MarkDeleteOrOverwrite(pid);
 		AddData(pid, write_data);
 
@@ -131,7 +132,7 @@ namespace ransom
 			DebugMessage("Entropy: Ransomware pid detected: %d", pid);
 			KillRansomPids(pid);
 		}
-		
+
 		//data->Iopb->Parameters.Write.Length = 0;
 		//data->Iopb->Parameters.Write.ByteOffset.QuadPart = 0;
 		//FltSetCallbackDataDirty(data);
@@ -167,7 +168,7 @@ namespace ransom
 				//DebugMessage("Setting info STATUS_ACCESS_DENIED");
 				return FLT_PREOP_COMPLETE;
 			}
-			
+
 			if (data->Iopb->Parameters.SetFileInformation.FileInformationClass == FileAllocationInformation)
 			{
 				if (((PFILE_ALLOCATION_INFORMATION)(data->Iopb->Parameters.SetFileInformation.InfoBuffer))->AllocationSize.QuadPart == 0)
@@ -181,7 +182,7 @@ namespace ransom
 			}
 
 			switch (data->Iopb->Parameters.SetFileInformation.FileInformationClass) {
-			
+
 			case FileRenameInformation:
 			case FileRenameInformationEx:
 			case FileDispositionInformation:
@@ -219,7 +220,6 @@ namespace ransom
 
 	FLT_PREOP_CALLBACK_STATUS PreCreateOperation(_Inout_ PFLT_CALLBACK_DATA data, _In_ PCFLT_RELATED_OBJECTS flt_objects, _Flt_CompletionContext_Outptr_ PVOID* completion_context)
 	{
-		/*
 		if (is_enabled == false)
 		{
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
@@ -231,17 +231,26 @@ namespace ransom
 		}
 
 		String<WCHAR> file_name = flt::GetFileFullPathName(data);
-		DebugMessage("Creating: %wS", file_name.Data());
+		//DebugMessage("Creating: %wS", file_name.Data());
 
 		if (test_mode == true && file_name.Find(TEST_FOLDER) == static_cast<size_t>(-1))
 		{
+			bool is_new_file = false;
+			// Get create disposition
+			unsigned long long create_disposition = (data->Iopb->Parameters.Create.Options >> 24) & 0x000000FF;
+
+			is_new_file = ((FILE_SUPERSEDE == create_disposition)
+				|| (FILE_CREATE == create_disposition)
+				|| (FILE_OPEN_IF == create_disposition)
+				|| (FILE_OVERWRITE == create_disposition)
+				|| (FILE_OVERWRITE_IF == create_disposition));
+
 			data->IoStatus.Status = STATUS_ACCESS_DENIED;
 			data->IoStatus.Information = 0;
-			DebugMessage("Create STATUS_ACCESS_DENIED");
+			//DebugMessage("Create STATUS_ACCESS_DENIED");
 			return FLT_PREOP_COMPLETE;
 		}
-		DebugMessage("Created");
-		*/
+		//DebugMessage("Created");
 		return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 	}
 
