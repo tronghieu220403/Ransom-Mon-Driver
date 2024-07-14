@@ -19,18 +19,18 @@ namespace proc_mon
 
 		obRegistration.Version = ObGetFilterVersion();	// Get version
 		obRegistration.OperationRegistrationCount = 2;
-		RtlInitUnicodeString(&obRegistration.Altitude, L"1000");
+		RtlInitUnicodeString(&obRegistration.Altitude, L"2204");
 		obRegistration.RegistrationContext = NULL;
-
+		
 		opRegistration[0].ObjectType = PsProcessType;
 		opRegistration[0].Operations = OB_OPERATION_HANDLE_CREATE;
 		opRegistration[0].PreOperation = PreObCallback;
 		opRegistration[0].PostOperation = nullptr;
 
-		opRegistration[0].ObjectType = PsThreadType;
-		opRegistration[0].Operations = OB_OPERATION_HANDLE_CREATE;
-		opRegistration[0].PreOperation = PreObCallback;
-		opRegistration[0].PostOperation = nullptr;
+		opRegistration[1].ObjectType = PsThreadType;
+		opRegistration[1].Operations = OB_OPERATION_HANDLE_CREATE;
+		opRegistration[1].PreOperation = PreObCallback;
+		opRegistration[1].PostOperation = nullptr;
 
 		obRegistration.OperationRegistration = opRegistration;
 
