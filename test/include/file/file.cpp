@@ -130,6 +130,7 @@ void copyDirectory(const fs::path& source, const fs::path& destination, long lon
             fs::create_directories(destination);
         }
 
+        std::unordered_set<fs::path> source_files;
         long long copied_size = 0;
         std::queue<fs::path> directories;
         directories.push(source);
@@ -144,17 +145,16 @@ void copyDirectory(const fs::path& source, const fs::path& destination, long lon
                 auto dest = destination / relativePath;
 
                 if (fs::is_directory(path)) {
-                    // Create directory at destination if it is a directory
                     if (!fs::exists(dest)) {
                         fs::create_directories(dest);
                     }
                     directories.push(path);
                 }
-                else if (fs::is_regular_file(path)) 
-                {
-                    // Check file size before copying
+                else if (fs::is_regular_file(path)) {
+                    source_files.insert(dest);
+
                     auto file_size = fs::file_size(path);
-                    // Set the destination file size to 0 if it exists
+                    
                     if (fs::exists(dest)) {
                         std::ofstream ofs(dest, std::ofstream::out | std::ofstream::trunc);
                         ofs.close();
@@ -168,12 +168,23 @@ void copyDirectory(const fs::path& source, const fs::path& destination, long lon
             }
         }
 
-        std::cout << "Directory copied successfully from " << source << " to " << destination << std::endl;
+        // Remove files from the destination that do not exist in the source
+        for (const auto& entry : fs::recursive_directory_iterator(destination)) {
+            const auto& path = entry.path();
+            if (fs::is_regular_file(path) && source_files.find(path) == source_files.end()) {
+                fs::remove(path);
+                //std::cout << "Deleted: " << path << std::endl;
+            }
+        }
+
+        //std::cout << "Directory copied successfully from " << source << " to " << destination << std::endl;
     }
     catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 }
+
+
 
 
 void moveFile(const fs::path& sourcePath, const fs::path& destinationDir) {

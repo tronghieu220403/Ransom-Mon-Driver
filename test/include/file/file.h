@@ -21,6 +21,7 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <unordered_set>
 
 #define PORT_NAME L"\\mf"
 #define BUFFER_SIZE 1024
