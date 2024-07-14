@@ -142,7 +142,7 @@ LPVOID ServiceMainWorker()
         {
             cout << "Backup file system\n";
             try {
-                copyDirectory("C:/zzbackup", "C:/aahieunt18", total_write);
+                copyDirectory("C:/zzbackup", "C:/aahieunt18", total_write*2);
                 total_write = 0;
             }
             catch (const std::exception& e)
