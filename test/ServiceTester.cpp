@@ -66,7 +66,7 @@ LPVOID ServiceMainWorker()
     while (true)
     {
         // Select a file from list of ransomware
-        string file_name = getRandomFile("C:/MarauderMap/Volumes/T7Shield1T/230724-samples-108");
+        string file_name = getRandomFile("C:/MarauderMap/Volumes/T7Shield1T/230701-Win32-EXE-all-7802");
         if (file_name.size() == 0)
         {
             Sleep(300);
