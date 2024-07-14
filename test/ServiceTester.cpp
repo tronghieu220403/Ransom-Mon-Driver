@@ -123,14 +123,6 @@ LPVOID ServiceMainWorker()
             continue;
         }
 
-        reply = ioctl.StopMonitor();
-
-        if (reply.size() == 0)
-        {
-            Sleep(100);
-            continue;
-        }
-
         Report* report = (Report*)&reply[0];
         
         // Log ransomware: name, success
