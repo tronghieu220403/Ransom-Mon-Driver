@@ -17,7 +17,8 @@ vector<unsigned char> Ioctl::StartMonitor()
 
     IOCTL_CMD* cmd = (IOCTL_CMD*)&in_buffer[0];
     cmd->cmd_class = kTestEnableRansom;
-    cmd->data_len = 0;
+    cmd->data_len = sizeof(int);
+    *(int*)cmd->data = GetCurrentProcessId();
 
     status = DeviceIoControl(device_, IOCTL_HIEU, &in_buffer[0], in_buffer.size() * sizeof(char), output.data(), sizeof(output_sz), &bytes_returned, (LPOVERLAPPED)NULL);
 

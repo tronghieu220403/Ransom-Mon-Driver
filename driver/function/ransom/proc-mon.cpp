@@ -384,7 +384,7 @@ namespace proc_mon
 			bool is_valid = true;
 			int ppid = (int)create_info->ParentProcessId;
 
-			DebugMessage("Creating pid %d, name %wS", pid, process_image_name.Data());
+			//DebugMessage("Creating pid %d, name %wS", pid, process_image_name.Data());
 			if (p_manager->Exist(ppid))
 			{
 				DebugMessage("Watch1 ppid %d, pid %d, name %wS", ppid, pid, process_image_name.Data());

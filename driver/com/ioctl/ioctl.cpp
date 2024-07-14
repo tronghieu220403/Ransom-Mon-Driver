@@ -137,6 +137,9 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 		proc_mon::p_manager->ResetReport();
 		test_start_reply = true;
 
+		pid = cmd->ParseEnableTestRansom().pid;
+		proc_mon::p_manager->DeleteProcess(pid);
+
 		irp->IoStatus.Information = sizeof(bool);
 		irp->IoStatus.Status = STATUS_SUCCESS;
 

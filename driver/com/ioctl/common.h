@@ -122,6 +122,12 @@ namespace ioctl
 	};
 	typedef struct IOCTL_CMD_UNPROTECT_DIR* PIOCTL_CMD_UNPROTECT_DIR;
 
+	struct IOCTL_CMD_ENABLE_TEST_RANSOM
+	{
+		ULONG pid;
+	};
+	typedef struct IOCTL_CMD_ENABLE_TEST_RANSOM* PIOCTL_CMD_ENABLE_TEST_RANSOM;
+
 	struct IOCTL_CMD
 	{
 		IOCTL_CMD_CLASS cmd_class;
@@ -278,6 +284,16 @@ namespace ioctl
 			String<WCHAR> dir_path(data_len);
 			::MemCopy(&dir_path[0], (WCHAR*)data, data_len);
 			return IOCTL_CMD_UNPROTECT_DIR{ dir_path };
+		}
+
+		IOCTL_CMD_ENABLE_TEST_RANSOM ParseEnableTestRansom()
+		{
+			if (cmd_class != IOCTL_CMD_CLASS::kTestEnableRansom)
+			{
+				return IOCTL_CMD_ENABLE_TEST_RANSOM();
+			}
+			ULONG pid = *(ULONG*)data;
+			return IOCTL_CMD_ENABLE_TEST_RANSOM{ pid };
 		}
 	} ;
 
