@@ -118,34 +118,53 @@ string copyFile(const std::string& sourcePath, const std::string& destinationPat
     }
 }
 
-void copyDirectory(const fs::path& source, const fs::path& destination) {
+void copyDirectory(const fs::path& source, const fs::path& destination, long long total_size) {
     try {
         // Check if source directory exists and is a directory
         if (!fs::exists(source) || !fs::is_directory(source)) {
             throw std::runtime_error("Source directory does not exist or is not a directory");
         }
 
-        // Remove the destination directory if it exists
-        if (fs::exists(destination)) {
-            fs::remove_all(destination);
+        // Create the destination directory if it doesn't exist
+        if (!fs::exists(destination)) {
+            fs::create_directories(destination);
         }
 
-        // Create the destination directory
-        fs::create_directories(destination);
+        long long copied_size = 0;
+        std::queue<fs::path> directories;
+        directories.push(source);
 
-        // Iterate over the source directory
-        for (const auto& entry : fs::recursive_directory_iterator(source)) {
-            const auto& path = entry.path();
-            auto relativePath = fs::relative(path, source);
-            auto dest = destination / relativePath;
+        while (!directories.empty()) {
+            fs::path current_dir = directories.front();
+            directories.pop();
 
-            if (fs::is_directory(path)) {
-                // Create directory at destination if it is a directory
-                fs::create_directories(dest);
-            }
-            else if (fs::is_regular_file(path)) {
-                // Copy file to destination if it is a regular file
-                fs::copy_file(path, dest, fs::copy_options::overwrite_existing);
+            for (const auto& entry : fs::directory_iterator(current_dir)) {
+                const auto& path = entry.path();
+                auto relativePath = fs::relative(path, source);
+                auto dest = destination / relativePath;
+
+                if (fs::is_directory(path)) {
+                    // Create directory at destination if it is a directory
+                    if (!fs::exists(dest)) {
+                        fs::create_directories(dest);
+                    }
+                    directories.push(path);
+                }
+                else if (fs::is_regular_file(path)) 
+                {
+                    // Check file size before copying
+                    auto file_size = fs::file_size(path);
+                    // Set the destination file size to 0 if it exists
+                    if (fs::exists(dest)) {
+                        std::ofstream ofs(dest, std::ofstream::out | std::ofstream::trunc);
+                        ofs.close();
+                    }
+                    fs::copy_file(path, dest, fs::copy_options::overwrite_existing);
+                    copied_size += file_size;
+                    if (copied_size > total_size) {
+                        return;
+                    }
+                }
             }
         }
 
@@ -155,6 +174,7 @@ void copyDirectory(const fs::path& source, const fs::path& destination) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 }
+
 
 void moveFile(const fs::path& sourcePath, const fs::path& destinationDir) {
     try {

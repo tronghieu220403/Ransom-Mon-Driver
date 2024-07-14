@@ -14,7 +14,8 @@
 #include <string>
 #include <iostream>
 #include <chrono>
-
+#include <fstream>
+#include <queue>
 #include <iostream>
 #include <filesystem>
 #include <vector>
@@ -33,7 +34,7 @@ bool VerifyEmbeddedSignature(LPCWSTR pwszSourceFile);
 wstring GetDosPath(const wstring* wstr);
 string getRandomFile(const std::string& directoryPath);
 string copyFile(const std::string& sourcePath, const std::string& destinationPath);
-void copyDirectory(const fs::path& source, const fs::path& destination);
+void copyDirectory(const fs::path& source, const fs::path& destination, long long total_size);
 void moveFile(const fs::path& sourcePath, const fs::path& destinationDir);
 std::string getFileNameWithoutExtension(const std::string& filePath);
 
