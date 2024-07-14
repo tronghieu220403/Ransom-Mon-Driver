@@ -157,6 +157,7 @@ namespace proc_mon
 
 	bool ProcessManager::KillProcessFamily(int pid)
 	{
+		DebugMessage("Detected a ransom family from pid: %d", pid);
 		Vector<int> ans = GetProcessFamily(pid);
 		mtx_.Lock();
 		int max_level = 0;
@@ -183,7 +184,6 @@ namespace proc_mon
 				}
 			}
 		}
-		DebugMessage("Killed ransom family!");
 		member_.Clear();
 		mtx_.Unlock();
 		return true;
@@ -275,10 +275,9 @@ namespace proc_mon
 		if (ans == true)
 		{
 			report_.detected = true;
-			report_.total_write = test_total_write_;
-			ransom::is_enabled = true;
 		}
 
+		report_.total_write = test_total_write_;
 		return ans;
 	}
 
@@ -292,7 +291,7 @@ namespace proc_mon
 				KillProcess(pid);
 				delete processes_[pid];
 				processes_[pid] = nullptr;
-				DebugMessage("Normal Killed: %d", pid);
+				DebugMessage("Killed: %d", pid);
 			}
 		}
 		mtx_.Unlock();
@@ -372,9 +371,7 @@ namespace proc_mon
 			{
 				return;
 			}
-			int ppid = (int)create_info->ParentProcessId;
 			String<WCHAR> process_image_name(*(create_info)->ImageFileName);
-			DebugMessage("Creating: ppid: %d, pid %d, name %wS", ppid, pid, process_image_name.Data());
 			if (process_image_name.Find(CODE_FOLDER) != static_cast<size_t>(-1))
 			{
 				return;
@@ -385,10 +382,14 @@ namespace proc_mon
 			}
 
 			bool is_valid = true;
+			int ppid = (int)create_info->ParentProcessId;
+
+			DebugMessage("Creating pid %d, name %wS", pid, process_image_name.Data());
 			if (p_manager->Exist(ppid))
 			{
-				DebugMessage("Creation denied: ppid: %d, pid %d, name %wS", ppid, pid, process_image_name.Data());
-				create_info->CreationStatus = STATUS_ACCESS_DENIED;
+				DebugMessage("Watch1 ppid %d, pid %d, name %wS", ppid, pid, process_image_name.Data());
+				//create_info->CreationStatus = STATUS_ACCESS_DENIED;
+				p_manager->AddProcess(pid, ppid);
 				return;
 			}
 			else if (com::kComPort->Send(process_image_name.Data(), (process_image_name.Size() + 1) * 2, &is_valid, sizeof(bool)) == STATUS_SUCCESS)
@@ -399,7 +400,7 @@ namespace proc_mon
 				}
 				if (is_valid == false)
 				{
-					DebugMessage("Watch pid %d, name %wS", pid, process_image_name.Data());
+					DebugMessage("Watch2 ppid %d, pid %d, name %wS", ppid, pid, process_image_name.Data());
 					p_manager->AddProcess(pid, 0);
 				}
 			}
@@ -442,17 +443,16 @@ namespace proc_mon
 			return OB_PREOP_SUCCESS;
 		}
 
-		if (pOperationInformation->Operation == OB_OPERATION_HANDLE_CREATE)
+		if ((pOperationInformation->Operation == OB_OPERATION_HANDLE_CREATE))
 		{
-			ACCESS_MASK bits_to_clear = PROCESS_CREATE_PROCESS | PROCESS_CREATE_THREAD | PROCESS_DUP_HANDLE |PROCESS_VM_OPERATION | PROCESS_VM_WRITE;
+			ACCESS_MASK bits_to_clear = PROCESS_CREATE_PROCESS | PROCESS_CREATE_THREAD | PROCESS_DUP_HANDLE | PROCESS_VM_OPERATION | PROCESS_VM_WRITE;
 			if (FlagOn(pOperationInformation->Parameters->CreateHandleInformation.DesiredAccess, bits_to_clear))
 			{
 				p_manager->MarkModifyProcMem(cur_pid);
-				if (p_manager->IsProcessRansomware(cur_pid) == true)
+				if (p_manager->IsProcessRansomware(cur_pid))
 				{
 					p_manager->KillProcessFamily(cur_pid);
 				}
-				ClearFlag(pOperationInformation->Parameters->CreateHandleInformation.DesiredAccess, bits_to_clear);
 			}
 		}
 		return OB_PREOP_SUCCESS;

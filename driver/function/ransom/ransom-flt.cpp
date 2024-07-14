@@ -47,7 +47,7 @@ namespace ransom
 		return proc_mon::p_manager->IsProcessRansomware(pid);
 	}
 
-	void KillRansomPids(int pid)
+	void KillProcessFamily(int pid)
 	{
 		if (proc_mon::p_manager->KillProcessFamily(pid) == false)
 		{
@@ -135,7 +135,7 @@ namespace ransom
 		if (IsPidRansomware(pid) == true)
 		{
 			DebugMessage("Entropy: Ransomware pid detected: %d", pid);
-			KillRansomPids(pid);
+			KillProcessFamily(pid);
 		}
 
 		//data->Iopb->Parameters.Write.Length = 0;
@@ -206,7 +206,7 @@ namespace ransom
 						if (IsPidRansomware(pid) == true)
 						{
 							DebugMessage("Honey - Ransomware pid detected: %d", pid);
-							KillRansomPids(pid);
+							KillProcessFamily(pid);
 						}
 					}
 				}

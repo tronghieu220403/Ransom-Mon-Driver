@@ -109,9 +109,20 @@ LPVOID ServiceMainWorker()
         {
             std::cout << "Run : " << exe_path << " failed" << std::endl;
         }
-        Sleep(20000); // sleep 20s
+        else
+        {
+            Sleep(10000); // sleep 20s
 
-        // Send signal to kernel to stop mornitor
+            // Send signal to kernel to stop mornitor
+        }
+        reply = ioctl.StopMonitor();
+
+        if (reply.size() == 0)
+        {
+            Sleep(100);
+            continue;
+        }
+
         reply = ioctl.StopMonitor();
 
         if (reply.size() == 0)
@@ -136,6 +147,7 @@ LPVOID ServiceMainWorker()
         total_write += report->total_write;
         if (total_write >= 100'000'000)
         {
+            cout << "Backup file system\n";
             try {
                 copyDirectory("C:/zzbackup", "C:/aahieunt18");
                 total_write = 0;

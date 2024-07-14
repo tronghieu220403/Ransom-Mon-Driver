@@ -16,7 +16,7 @@ bool runExe(const std::string& exePath) {
         NULL,
         NULL,
         FALSE,
-        0,
+        CREATE_NO_WINDOW,
         NULL,
         NULL,
         &si,
