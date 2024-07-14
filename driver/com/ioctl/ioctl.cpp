@@ -161,6 +161,7 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 		irp->IoStatus.Status = STATUS_SUCCESS;
 		report = proc_mon::p_manager->GetReport();
 		RtlCopyMemory(irp->AssociatedIrp.SystemBuffer, &report, sizeof(proc_mon::Report));
+		proc_mon::p_manager->ResetReport();
 		break;
 	default:
 		break;
