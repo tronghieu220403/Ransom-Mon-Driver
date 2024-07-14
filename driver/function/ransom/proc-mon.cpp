@@ -465,7 +465,7 @@ namespace proc_mon
 						p_manager->KillProcessFamily(cur_pid);
 					}
 				}
-			}}
+			}
 			for (int i = 0; i < proc_mon::proctected_pids->Size(); i++)
 			{
 				if ((*proc_mon::proctected_pids)[i] == target_pid)
@@ -474,8 +474,6 @@ namespace proc_mon
 				}
 			}
 		}
-
-		
 
 		return OB_PREOP_SUCCESS;
 	}
