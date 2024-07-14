@@ -74,6 +74,12 @@ namespace ioctl
 	};
 	typedef struct IOCTL_CMD_UNHIDE_PROC_ID* PIOCTL_CMD_UNHIDE_PROC_ID;
 
+	struct IOCTL_CMD_PROTECT_PROC_ID
+	{
+		ULONG pid;
+	};
+	typedef struct IOCTL_CMD_PROTECT_PROC_ID* PIOCTL_CMD_PROTECT_PROC_ID;
+
 	struct IOCTL_CMD_HIDE_PROC_IMAGE
 	{
 		String<WCHAR> image_path;
@@ -196,6 +202,16 @@ namespace ioctl
 			}
 			ULONG pid = *(ULONG*)data;
 			return IOCTL_CMD_UNHIDE_PROC_ID{ pid };
+		}
+
+		IOCTL_CMD_PROTECT_PROC_ID ParseProtectProcId()
+		{
+			if (cmd_class != IOCTL_CMD_CLASS::kProtectProcId)
+			{
+				return IOCTL_CMD_PROTECT_PROC_ID();
+			}
+			ULONG pid = *(ULONG*)data;
+			return IOCTL_CMD_PROTECT_PROC_ID{ pid };
 		}
 
 		IOCTL_CMD_HIDE_PROC_IMAGE ParseHideProcImage()

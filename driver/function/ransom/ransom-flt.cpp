@@ -66,12 +66,27 @@ namespace ransom
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 		}
 		int pid = (int)(size_t)PsGetProcessId(IoThreadToProcess(data->Thread));
+		String<WCHAR> file_name = flt::GetFileFullPathName(data);
+
+		if (test_mode == true)
+		{
+			if (file_name.Find(REPORT_FOLDER) != static_cast<size_t>(-1))
+			{
+				if (proc_mon::proctected_pids->Size() == 0 || (*proc_mon::proctected_pids)[0] != pid)
+				{
+					data->IoStatus.Status = STATUS_ACCESS_DENIED;
+					data->IoStatus.Information = 0;
+					return FLT_PREOP_COMPLETE;
+				}
+
+			}
+		}
+
 		if (proc_mon::p_manager->Exist(pid) == false)
 		{
 			return FLT_PREOP_SUCCESS_WITH_CALLBACK;
 		}
 
-		String<WCHAR> file_name = flt::GetFileFullPathName(data);
 
 		if (test_mode == true)
 		{

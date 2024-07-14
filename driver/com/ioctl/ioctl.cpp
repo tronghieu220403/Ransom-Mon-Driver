@@ -94,6 +94,10 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 		pid = cmd->ParseHideProcId().pid;
 		break;
 
+	case IOCTL_CMD_CLASS::kProtectProcId:
+		pid = cmd->ParseProtectProcId().pid;
+
+		break;
 	case IOCTL_CMD_CLASS::kHideProcImage:
 
 		break;
@@ -139,6 +143,9 @@ NTSTATUS ioctl::HandleIoctl(PDEVICE_OBJECT device_object, PIRP irp)
 
 		pid = cmd->ParseEnableTestRansom().pid;
 		proc_mon::p_manager->DeleteProcess(pid);
+
+		proc_mon::proctected_pids->Clear();
+		proc_mon::proctected_pids->PushBack(pid);
 
 		irp->IoStatus.Information = sizeof(bool);
 		irp->IoStatus.Status = STATUS_SUCCESS;

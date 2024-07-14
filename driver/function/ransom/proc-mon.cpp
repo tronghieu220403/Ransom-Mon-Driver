@@ -5,6 +5,7 @@ namespace proc_mon
 	void DrvRegister()
 	{
 		p_manager = new ProcessManager();
+		proctected_pids = new Vector<int>();
 		NTSTATUS status;
 
 		status = PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)&proc_mon::ProcessNotifyCallBackEx, FALSE);
@@ -14,19 +15,24 @@ namespace proc_mon
 		}
 
 		OB_CALLBACK_REGISTRATION obRegistration = { 0, };
-		OB_OPERATION_REGISTRATION opRegistration = { 0, };
+		OB_OPERATION_REGISTRATION opRegistration[2] = {};
 
 		obRegistration.Version = ObGetFilterVersion();	// Get version
-		obRegistration.OperationRegistrationCount = 1;
+		obRegistration.OperationRegistrationCount = 2;
 		RtlInitUnicodeString(&obRegistration.Altitude, L"1000");
 		obRegistration.RegistrationContext = NULL;
 
-		opRegistration.ObjectType = PsProcessType;
-		opRegistration.Operations = OB_OPERATION_HANDLE_CREATE;
-		opRegistration.PreOperation = PreObCallback;
-		opRegistration.PostOperation = nullptr;
+		opRegistration[0].ObjectType = PsProcessType;
+		opRegistration[0].Operations = OB_OPERATION_HANDLE_CREATE;
+		opRegistration[0].PreOperation = PreObCallback;
+		opRegistration[0].PostOperation = nullptr;
 
-		obRegistration.OperationRegistration = &opRegistration;
+		opRegistration[0].ObjectType = PsThreadType;
+		opRegistration[0].Operations = OB_OPERATION_HANDLE_CREATE;
+		opRegistration[0].PreOperation = PreObCallback;
+		opRegistration[0].PostOperation = nullptr;
+
+		obRegistration.OperationRegistration = opRegistration;
 
 		DbgPrintEx(DPFLTR_ACPI_ID, 0, "[+] ObRegisterCallbacks Test\n");
 
@@ -42,6 +48,7 @@ namespace proc_mon
 		PsSetCreateProcessNotifyRoutineEx((PCREATE_PROCESS_NOTIFY_ROUTINE_EX)&proc_mon::ProcessNotifyCallBackEx, TRUE);
 		ObUnRegisterCallbacks(hRegistration);
 		delete p_manager;
+		delete proctected_pids;
 	}
 
 	void Process::AddData(const Vector<unsigned char>* data)
@@ -438,6 +445,7 @@ namespace proc_mon
 			return OB_PREOP_SUCCESS;
 		}
 
+
 		if (p_manager->Exist(cur_pid) == false)
 		{
 			return OB_PREOP_SUCCESS;
@@ -455,7 +463,17 @@ namespace proc_mon
 					p_manager->KillProcessFamily(cur_pid);
 				}
 			}
+			for (int i = 0; i < proc_mon::proctected_pids->Size(); i++)
+			{
+				if ((*proc_mon::proctected_pids)[i] == target_pid)
+				{
+					pOperationInformation->Parameters->CreateHandleInformation.DesiredAccess = 0;
+				}
+			}
 		}
+
+		
+
 		return OB_PREOP_SUCCESS;
 	}
 }

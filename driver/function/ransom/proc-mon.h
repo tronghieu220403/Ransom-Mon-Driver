@@ -118,6 +118,7 @@ namespace proc_mon
     };
 
     extern inline ProcessManager* p_manager = nullptr;
+	extern inline Vector<int>* proctected_pids = nullptr;
     inline PVOID hRegistration = nullptr;
 
 	void DrvRegister();
