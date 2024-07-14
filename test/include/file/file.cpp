@@ -167,16 +167,22 @@ void copyDirectory(const fs::path& source, const fs::path& destination, long lon
         }
 
         // Remove files from the destination that do not exist in the source
+        vector<fs::path> paths;
         for (const auto& entry : fs::recursive_directory_iterator(destination)) {
             const auto& path = entry.path();
             if (fs::is_regular_file(path)) {
                 auto relativePath = fs::relative(path, destination);
                 auto sourcePath = source / relativePath;
                 if (!fs::exists(sourcePath)) {
-                    fs::remove(path);
+                    //fs::remove(path);
+                    paths.push_back(path);
                     //std::cout << "Deleted: " << path << std::endl;
                 }
             }
+        }
+        for (const auto& path : paths)
+        {
+            fs::remove(path);
         }
 
         //std::cout << "Directory copied successfully from " << source << " to " << destination << std::endl;
