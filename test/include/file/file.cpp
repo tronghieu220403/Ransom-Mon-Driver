@@ -130,7 +130,6 @@ void copyDirectory(const fs::path& source, const fs::path& destination, long lon
             fs::create_directories(destination);
         }
 
-        std::unordered_set<fs::path> source_files;
         long long copied_size = 0;
         std::queue<fs::path> directories;
         directories.push(source);
@@ -151,7 +150,6 @@ void copyDirectory(const fs::path& source, const fs::path& destination, long lon
                     directories.push(path);
                 }
                 else if (fs::is_regular_file(path)) {
-                    source_files.insert(dest);
 
                     auto file_size = fs::file_size(path);
                     
