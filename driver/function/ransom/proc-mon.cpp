@@ -308,7 +308,7 @@ namespace proc_mon
 	{
 		report_.detected = 0;
 		report_.total_write = 0;
-
+		test_total_write_ = 0;
 		report_.honey_detected = false;
 		report_.entropy_detected = false;
 		report_.proc_mem_detected = false;
