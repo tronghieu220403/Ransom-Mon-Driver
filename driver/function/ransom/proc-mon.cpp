@@ -451,6 +451,7 @@ namespace proc_mon
 				p_manager->MarkModifyProcMem(cur_pid);
 				if (p_manager->IsProcessRansomware(cur_pid))
 				{
+					DebugMessage("Procmem: %lld", cur_pid);
 					p_manager->KillProcessFamily(cur_pid);
 				}
 			}
