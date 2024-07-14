@@ -11,7 +11,7 @@
 
 void writeReportToFile(const std::string& file_path, const Report& report) {
     
-    string path = "C:/MarauderMap/Report/" + getFileNameWithoutExtension(file_path) + ".txt";
+    string path = "C:/MarauderMap/OneDrive/Report/" + getFileNameWithoutExtension(file_path) + ".txt";
 
     std::ofstream outFile(path);
 
