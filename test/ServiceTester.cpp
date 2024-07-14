@@ -59,17 +59,6 @@ LPVOID ServiceMainWorker()
     unsigned long long total_write = 0;
     //ExportRegistryKey(KEY_PATH, EXPORT_PATH);
 
-    cout << "Backup file system\n";
-    try {
-        copyDirectory("C:/zzbackup", "C:/aahieunt18");
-        total_write = 0;
-    }
-    catch (const std::exception& e)
-    {
-
-    }
-    return nullptr;
-
     NamedPipe pipe("\\\\.\\pipe\\MyPipe", true);
     pipe.connect();
     Ioctl ioctl;
