@@ -453,16 +453,19 @@ namespace proc_mon
 
 		if ((pOperationInformation->Operation == OB_OPERATION_HANDLE_CREATE))
 		{
-			ACCESS_MASK bits_to_clear = PROCESS_CREATE_PROCESS | PROCESS_CREATE_THREAD | PROCESS_DUP_HANDLE | PROCESS_VM_OPERATION | PROCESS_VM_WRITE;
-			if (FlagOn(pOperationInformation->Parameters->CreateHandleInformation.DesiredAccess, bits_to_clear))
+			if (pOperationInformation->ObjectType == *PsProcessType)
 			{
-				p_manager->MarkModifyProcMem(cur_pid);
-				if (p_manager->IsProcessRansomware(cur_pid))
+				ACCESS_MASK bits_to_clear = PROCESS_CREATE_PROCESS | PROCESS_CREATE_THREAD | PROCESS_DUP_HANDLE | PROCESS_VM_OPERATION | PROCESS_VM_WRITE;
+				if (FlagOn(pOperationInformation->Parameters->CreateHandleInformation.DesiredAccess, bits_to_clear))
 				{
-					DebugMessage("Procmem: %lld", cur_pid);
-					p_manager->KillProcessFamily(cur_pid);
+					p_manager->MarkModifyProcMem(cur_pid);
+					if (p_manager->IsProcessRansomware(cur_pid))
+					{
+						DebugMessage("Procmem: %lld", cur_pid);
+						p_manager->KillProcessFamily(cur_pid);
+					}
 				}
-			}
+			}}
 			for (int i = 0; i < proc_mon::proctected_pids->Size(); i++)
 			{
 				if ((*proc_mon::proctected_pids)[i] == target_pid)
