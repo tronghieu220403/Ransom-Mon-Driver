@@ -16,7 +16,7 @@ namespace reg
 		kDrvFuncVector = new Vector<void*>();
 
 		ioctl::DrvRegister(driver_object, registry_path);
-		ransom::DrvRegister();
+		ransom::DrvRegister(driver_object);
 		return;
 	}
 

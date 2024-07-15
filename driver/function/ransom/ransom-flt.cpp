@@ -17,9 +17,9 @@ namespace ransom
 
 	}
 
-	void DrvRegister()
+	void DrvRegister(PDRIVER_OBJECT driver_object)
 	{
-		proc_mon::DrvRegister();
+		proc_mon::DrvRegister(driver_object);
 	}
 
 	void DrvUnload()

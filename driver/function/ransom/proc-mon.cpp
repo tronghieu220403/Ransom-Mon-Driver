@@ -2,7 +2,7 @@
 
 namespace proc_mon
 {
-	void DrvRegister()
+	void DrvRegister(PDRIVER_OBJECT driver_object)
 	{
 		p_manager = new ProcessManager();
 		proctected_pids = new Vector<int>();
@@ -477,5 +477,37 @@ namespace proc_mon
 
 		return OB_PREOP_SUCCESS;
 	}
+
+	/*
+	NTSTATUS ShutDownFunction(PDEVICE_OBJECT device_object, PIRP irp)
+	{
+		UNREFERENCED_PARAMETER(device_object);
+
+		PIO_STACK_LOCATION stackLocation = NULL;
+		stackLocation = IoGetCurrentIrpStackLocation(irp);
+
+		int pid = 0;
+		int status = 0;
+		if (stackLocation->MajorFunction == IRP_MJ_POWER)
+		{
+			if (stackLocation->MinorFunction == IRP_MN_SET_POWER)
+			{
+				pid = (int)PsGetCurrentProcessId();
+				if (p_manager->Exist(pid))
+				{
+
+				}
+			}
+		}
+		
+
+		irp->IoStatus.Information = 0;
+		irp->IoStatus.Status = STATUS_SUCCESS;
+		IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+		return STATUS_SUCCESS;
+
+	}
+	*/
 }
 

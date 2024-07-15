@@ -18,7 +18,7 @@ namespace ransom
 {
 	void FltRegister();
 	void FltUnload();
-	void DrvRegister();
+	void DrvRegister(PDRIVER_OBJECT driver_object);
 	void DrvUnload();
 
 	void AddData(int pid, Vector<unsigned char> data);

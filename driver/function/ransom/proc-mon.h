@@ -121,11 +121,12 @@ namespace proc_mon
 	extern inline Vector<int>* proctected_pids = nullptr;
     inline PVOID hRegistration = nullptr;
 
-	void DrvRegister();
+	void DrvRegister(PDRIVER_OBJECT driver_object);
 	void DrvUnload();
 
 	void ProcessNotifyCallBackEx(PEPROCESS, int, PPS_CREATE_NOTIFY_INFO);
 
     OB_PREOP_CALLBACK_STATUS PreObCallback(PVOID RegistrationContext, POB_PRE_OPERATION_INFORMATION pOperationInformation);
 
+    //NTSTATUS ShutDownFunction(PDEVICE_OBJECT device_object, PIRP irp);
 }
